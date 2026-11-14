@@ -1,0 +1,2517 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MyTravelExpense - Smart Travel Budget App</title>
+    <!-- PWA & Android APK Readiness Meta Tags -->
+    <meta name="theme-color" content="#4338ca">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MyTravelExpense">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="Smart Offline Travel Expense Tracker with Bilingual AI Voice Assistant">
+    <!-- Static & Dynamic Manifest for PWABuilder Compatibility -->
+    <link rel="manifest" id="dynamic-manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22MyTravelExpense%22%2C%22short_name%22%3A%22TravelExpense%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f8fafc%22%2C%22theme_color%22%3A%22%234338ca%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fplacehold.co%2F192x192%2F4338ca%2Fffffff.png%3Ftext%3DMTE%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%2C%22purpose%22%3A%22any%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Fplacehold.co%2F512x512%2F4338ca%2Fffffff.png%3Ftext%3DMTE%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%2C%22purpose%22%3A%22any%22%7D%5D%7D">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/4338ca/ffffff.png?text=MTE">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #f8fafc;
+        }
+        [dir="rtl"] body {
+            font-family: 'Cairo', 'Inter', sans-serif;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 14px rgba(79, 70, 229, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+        }
+        .mic-listening {
+            animation: pulse-ring 1.5s infinite;
+            background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-700">
+
+    <!-- Main Mobile-First Wrapper -->
+    <div id="app-container" class="max-w-md mx-auto min-h-screen bg-slate-50 shadow-2xl relative flex flex-col overflow-x-hidden pb-24">
+
+        <!-- Toast Feedback Banner -->
+        <div id="toast-banner" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-sm hidden transition-all duration-300">
+            <div id="toast-content" class="bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-sm font-medium border border-slate-700">
+                <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+                <span id="toast-message" class="flex-1"></span>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TRIP SETUP WIZARD (3 STEPS)                               -->
+        <!-- ========================================================= -->
+        <div id="setup-wizard" class="flex-1 flex flex-col p-5">
+            <!-- Top Wizard Bar with Language Toggle -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200">
+                        <i class="fa-solid fa-plane-departure text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-extrabold text-lg text-slate-900 leading-tight">MyTravelExpense</h1>
+                        <p class="text-xs text-slate-500" data-i18n="wizardSubtitle">Smart Trip Budget Planner</p>
+                    </div>
+                </div>
+                <button onclick="toggleLanguage()" class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-indigo-600 shadow-sm hover:bg-indigo-50 transition">
+                    <i class="fa-solid fa-globe mx-1"></i>
+                    <span id="wizard-lang-btn">عربي</span>
+                </button>
+            </div>
+
+            <!-- Step Progress Indicator -->
+            <div class="flex items-center justify-between mb-6 px-2">
+                <div class="flex items-center gap-2">
+                    <span id="step-badge-1" class="w-7 h-7 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center">1</span>
+                    <span class="text-xs font-semibold text-slate-700" data-i18n="step1Title">Trip Info</span>
+                </div>
+                <div class="h-0.5 flex-1 bg-slate-200 mx-2" id="step-line-1"></div>
+                <div class="flex items-center gap-2">
+                    <span id="step-badge-2" class="w-7 h-7 rounded-full bg-slate-200 text-slate-500 text-xs font-bold flex items-center justify-center">2</span>
+                    <span class="text-xs font-semibold text-slate-500" data-i18n="step2Title">Allocate</span>
+                </div>
+                <div class="h-0.5 flex-1 bg-slate-200 mx-2" id="step-line-2"></div>
+                <div class="flex items-center gap-2">
+                    <span id="step-badge-3" class="w-7 h-7 rounded-full bg-slate-200 text-slate-500 text-xs font-bold flex items-center justify-center">3</span>
+                    <span class="text-xs font-semibold text-slate-500" data-i18n="step3Title">Confirm</span>
+                </div>
+            </div>
+
+            <!-- WIZARD STEP 1: Trip Details & Currency Conversion -->
+            <div id="wizard-step-1" class="space-y-4 flex-1 flex flex-col">
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5" data-i18n="tripNameLabel">Trip Name</label>
+                        <input type="text" id="wiz-trip-name" placeholder="e.g., Thailand Adventure 2026" class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white focus:outline-none text-sm font-medium">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5" data-i18n="baseCurrencyLabel">Budget Currency</label>
+                            <select id="wiz-base-curr" onchange="updateWizardRate()" class="w-full px-3 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white focus:outline-none text-sm font-bold text-slate-800">
+                                <option value="JOD" selected>JOD (دينار أردني)</option>
+                                <option value="USD">USD (دولار أمريكي)</option>
+                                <option value="SAR">SAR (ريال سعودي)</option>
+                                <option value="AED">AED (درهم إماراتي)</option>
+                                <option value="EUR">EUR (يورو)</option>
+                                <option value="GBP">GBP (جنيه إسترليني)</option>
+                                <option value="KWD">KWD (دينار كويتي)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5" data-i18n="destCurrencyLabel">Destination Currency</label>
+                            <select id="wiz-dest-curr" onchange="updateWizardRate()" class="w-full px-3 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white focus:outline-none text-sm font-bold text-indigo-700">
+                                <option value="THB" selected>THB (بات تايلاندي)</option>
+                                <option value="TRY">TRY (ليرة تركية)</option>
+                                <option value="EUR">EUR (يورو)</option>
+                                <option value="USD">USD (دولار أمريكي)</option>
+                                <option value="AED">AED (درهم إماراتي)</option>
+                                <option value="EGP">EGP (جنيه مصري)</option>
+                                <option value="MYR">MYR (رينغيت ماليزي)</option>
+                                <option value="IDR">IDR (روبية إندونيسية)</option>
+                                <option value="JPY">JPY (ين ياباني)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5" data-i18n="totalBudgetLabel">Total Budget (in Budget Currency)</label>
+                        <div class="relative">
+                            <input type="number" id="wiz-total-budget" oninput="calculateWizardConversion()" placeholder="1500" min="1" step="any" class="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white focus:outline-none text-lg font-extrabold text-slate-900">
+                            <span id="wiz-base-curr-badge" class="absolute inset-y-0 end-4 flex items-center text-xs font-extrabold text-slate-400">JOD</span>
+                        </div>
+                    </div>
+
+                    <!-- Exchange Rate & Converted Preview Box -->
+                    <div class="p-4 rounded-2xl bg-indigo-50/80 border border-indigo-100 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-indigo-900" data-i18n="exchangeRateLabel">Exchange Rate (1 Base =)</span>
+                            <div class="flex items-center gap-1.5">
+                                <input type="number" id="wiz-rate" oninput="calculateWizardConversion()" step="any" class="w-24 px-2.5 py-1 rounded-xl bg-white border border-indigo-200 text-right text-xs font-extrabold text-indigo-700 focus:outline-none">
+                                <span id="wiz-dest-curr-small" class="text-xs font-bold text-indigo-700">THB</span>
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-indigo-100 flex items-center justify-between">
+                            <span class="text-xs font-medium text-indigo-700" data-i18n="convertedAmountLabel">Converted Total Amount:</span>
+                            <span id="wiz-converted-total" class="text-base font-extrabold text-indigo-700">0 THB</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5" data-i18n="tripDaysLabel">Trip Duration (Days)</label>
+                        <input type="number" id="wiz-days" value="10" min="1" max="365" class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white focus:outline-none text-sm font-bold">
+                    </div>
+                </div>
+
+                <div class="mt-auto pt-4">
+                    <button onclick="goToWizardStep2()" class="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-indigo-200 transition flex items-center justify-center gap-2">
+                        <span data-i18n="confirmContinueBtn">Confirm & Allocate Budget</span>
+                        <i class="fa-solid fa-arrow-right rtl:rotate-180"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- WIZARD STEP 2: Allocate Categories & Live Pocket Money -->
+            <div id="wizard-step-2" class="hidden space-y-4 flex-1 flex flex-col">
+                <!-- Live Remaining Pocket Money Banner -->
+                <div class="bg-gradient-to-br from-indigo-600 to-violet-700 text-white p-4 rounded-3xl shadow-lg">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-medium text-indigo-100" data-i18n="remainingPocketMoney">Remaining Pocket Money</span>
+                        <span class="px-2.5 py-0.5 rounded-full bg-white/20 text-[11px] font-bold" id="wiz2-total-badge">Total: 1500 JOD</span>
+                    </div>
+                    <div class="flex items-baseline justify-between mt-1">
+                        <div id="wiz2-pocket-dest" class="text-2xl font-extrabold tracking-tight">0 THB</div>
+                        <div id="wiz2-pocket-base" class="text-sm font-bold text-indigo-200">0 JOD</div>
+                    </div>
+                    <div id="wiz2-overbudget-warn" class="hidden mt-2 text-xs bg-rose-500/90 text-white px-3 py-1.5 rounded-xl font-semibold">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+                        <span data-i18n="overBudgetWarn">Allocations exceed total budget!</span>
+                    </div>
+                </div>
+
+                <!-- Input Currency Mode Selector for Allocation -->
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-600" data-i18n="enterAmountsIn">Enter amounts in:</span>
+                    <div class="flex bg-slate-100 p-1 rounded-xl">
+                        <button type="button" id="alloc-mode-base" onclick="setAllocInputMode('base')" class="px-3 py-1.5 rounded-lg text-xs font-extrabold bg-white text-indigo-600 shadow-sm transition">JOD</button>
+                        <button type="button" id="alloc-mode-dest" onclick="setAllocInputMode('dest')" class="px-3 py-1.5 rounded-lg text-xs font-extrabold text-slate-500 transition">THB</button>
+                    </div>
+                </div>
+
+                <!-- 6 Categories Allocation Form -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm space-y-3" id="wiz2-categories-list">
+                    <!-- Dynamically populated -->
+                </div>
+
+                <div class="mt-auto pt-3 flex gap-3">
+                    <button onclick="goToWizardStep1()" class="px-5 py-4 rounded-2xl bg-white border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition">
+                        <i class="fa-solid fa-arrow-left rtl:rotate-180"></i>
+                    </button>
+                    <button onclick="goToWizardStep3()" class="flex-1 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-200 transition flex items-center justify-center gap-2">
+                        <span data-i18n="nextSummaryBtn">Next: Review Summary</span>
+                        <i class="fa-solid fa-arrow-right rtl:rotate-180"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- WIZARD STEP 3: Summary Confirmation & Start Trip -->
+            <div id="wizard-step-3" class="hidden space-y-4 flex-1 flex flex-col">
+                <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div>
+                            <h2 class="font-extrabold text-base text-slate-900" data-i18n="budgetSummaryTitle">Budget Allocation Summary</h2>
+                            <p id="wiz3-trip-subtitle" class="text-xs text-slate-500">Thailand • 10 Days</p>
+                        </div>
+                        <span class="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <i class="fa-solid fa-clipboard-check"></i>
+                        </span>
+                    </div>
+
+                    <!-- Category Summary Breakdown -->
+                    <div id="wiz3-breakdown" class="space-y-2 text-xs">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Pocket Money & Daily Allowance Card -->
+                <div class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-5 rounded-3xl shadow-lg space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-100" data-i18n="netPocketMoneyTitle">Net Pocket Money</span>
+                        <span id="wiz3-days-pill" class="px-2.5 py-0.5 rounded-full bg-white/20 text-[11px] font-bold">10 Days</span>
+                    </div>
+                    <div>
+                        <div id="wiz3-pocket-dest" class="text-3xl font-extrabold">0 THB</div>
+                        <div id="wiz3-pocket-base" class="text-sm font-semibold text-emerald-100 mt-0.5">0 JOD</div>
+                    </div>
+                    <div class="pt-3 border-t border-white/20 flex items-center justify-between">
+                        <span class="text-xs text-emerald-100" data-i18n="dailyPocketAllowance">Daily Pocket Allowance:</span>
+                        <div class="text-end">
+                            <div id="wiz3-daily-dest" class="text-sm font-extrabold">0 THB / day</div>
+                            <div id="wiz3-daily-base" class="text-[11px] text-emerald-100">0 JOD / day</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Option to Add Extra Pocket Money before starting -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                    <button type="button" onclick="toggleExtraPocketBox()" class="w-full flex items-center justify-between text-xs font-bold text-indigo-600">
+                        <span><i class="fa-solid fa-circle-plus mx-1"></i> <span data-i18n="addExtraPocketBtn">Add Extra Pocket Money</span></span>
+                        <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                    </button>
+                    <div id="extra-pocket-box" class="hidden mt-3 pt-3 border-t border-slate-100 flex gap-2">
+                        <input type="number" id="extra-pocket-input" placeholder="Amount in Base Currency" class="flex-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold focus:outline-none">
+                        <button type="button" onclick="applyExtraPocketMoney()" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold" data-i18n="addBtn">Add</button>
+                    </div>
+                </div>
+
+                <div class="mt-auto pt-3 flex gap-3">
+                    <button onclick="goToWizardStep2()" class="px-5 py-4 rounded-2xl bg-white border border-slate-200 text-slate-600 font-bold text-sm">
+                        <i class="fa-solid fa-arrow-left rtl:rotate-180"></i>
+                    </button>
+                    <button onclick="confirmAndStartTrip()" class="flex-1 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-lg shadow-emerald-200 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rocket"></i>
+                        <span data-i18n="startTripBtn">Confirm & Start Trip</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- MAIN ACTIVE APPLICATION (5 TABS + NOTIFICATIONS BELL)     -->
+        <!-- ========================================================= -->
+        <div id="main-app" class="hidden flex-1 flex flex-col">
+
+            <!-- Sticky Top Header with Dynamic Bell Position -->
+            <header class="sticky top-0 z-30 glass-card border-b border-slate-200/80 px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
+                        <i class="fa-solid fa-suitcase-rolling text-sm"></i>
+                    </div>
+                    <div>
+                        <h1 id="header-trip-name" class="font-extrabold text-sm text-slate-900 leading-tight">Thailand Trip</h1>
+                        <p id="header-trip-meta" class="text-[11px] font-medium text-slate-500">Day 1 of 10 • 1 JOD = 48 THB</p>
+                    </div>
+                </div>
+
+                <!-- Notification Bell Button (Automatically positioned on Right in EN, Left in AR via flex justify-between) -->
+                <button onclick="openNotificationsModal()" class="relative w-10 h-10 rounded-2xl bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 flex items-center justify-center transition">
+                    <i class="fa-solid fa-bell text-base"></i>
+                    <span id="notif-badge" class="hidden absolute -top-1 -end-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-extrabold flex items-center justify-center border-2 border-white">0</span>
+                </button>
+            </header>
+
+            <!-- TAB 1: HOME (Voice Assistant + Manual Expense + Today's Feed) -->
+            <main id="tab-home" class="p-4 space-y-4 flex-1">
+                <!-- Pocket Money Hero Card -->
+                <div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-indigo-900 text-white p-5 rounded-3xl shadow-xl relative overflow-hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-indigo-200" data-i18n="pocketMoneyRemaining">Pocket Money Remaining</span>
+                        <span id="home-daily-badge" class="px-2.5 py-1 rounded-full bg-white/10 text-[11px] font-bold text-emerald-300">Daily: 0 THB</span>
+                    </div>
+                    <div id="home-pocket-dest" class="text-3xl font-extrabold tracking-tight">0 THB</div>
+                    <div class="flex items-center justify-between mt-1.5">
+                        <span id="home-pocket-base" class="text-xs font-semibold text-indigo-300">≈ 0.00 JOD</span>
+                        <span id="home-today-spent" class="text-xs text-slate-300">Today: 0 THB</span>
+                    </div>
+                    <!-- Progress bar -->
+                    <div class="w-full h-2 bg-white/10 rounded-full mt-3 overflow-hidden">
+                        <div id="home-pocket-bar" class="h-full bg-emerald-400 rounded-full transition-all duration-500" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <!-- Voice Assistant Card (Shown when Voice Input is Enabled in Settings) -->
+                <div id="voice-assistant-card" class="bg-white p-4 rounded-3xl border border-indigo-100 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <h2 class="font-extrabold text-xs uppercase tracking-wider text-slate-700" data-i18n="aiVoiceAssistant">AI Voice Assistant</h2>
+                        </div>
+                        <span class="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-extrabold">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Auto AR / EN
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <button id="mic-btn" onclick="toggleVoiceRecognition()" class="w-14 h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-lg shadow-indigo-200 transition shrink-0">
+                            <i id="mic-icon" class="fa-solid fa-microphone text-xl"></i>
+                        </button>
+                        <div class="flex-1 min-w-0">
+                            <p id="voice-status-text" class="text-xs font-bold text-slate-800" data-i18n="tapMicPrompt">Tap mic & say e.g. "Seafood restaurant 1000 baht" or "Delete last transaction"</p>
+                            <p id="voice-transcript-preview" class="text-[11px] text-indigo-600 font-medium truncate mt-0.5"></p>
+                        </div>
+                    </div>
+
+                    <!-- Quick Smart Text/Voice Command Bar (Offline Fallback & Instant Test) -->
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex gap-2">
+                        <input type="text" id="voice-sim-input" onkeypress="if(event.key==='Enter') handleSmartVoiceText(this.value)" placeholder="Or type command: e.g. Massage 200 baht / ألغِ آخر عملية..." class="flex-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:border-indigo-500">
+                        <button onclick="handleSmartVoiceText(document.getElementById('voice-sim-input').value)" class="px-3.5 py-2 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-xs font-extrabold transition">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Manual Expense Entry Card -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm space-y-3">
+                    <h2 class="font-extrabold text-xs uppercase tracking-wider text-slate-700" data-i18n="manualExpenseTitle">Add Expense Manually</h2>
+                    <div class="grid grid-cols-1 gap-2.5">
+                        <input type="text" id="man-desc" placeholder="Description (e.g., Mango Sticky Rice, Taxi)" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="number" id="man-amount" oninput="updateManualConvertHint()" placeholder="Amount" step="any" class="col-span-2 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold focus:outline-none focus:border-indigo-500">
+                            <select id="man-currency" onchange="updateManualConvertHint()" class="px-2.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold text-indigo-700 focus:outline-none">
+                                <option value="dest">THB</option>
+                                <option value="base">JOD</option>
+                            </select>
+                        </div>
+                        <div id="man-convert-hint" class="text-[11px] font-semibold text-slate-400 px-1">≈ 0.00 JOD</div>
+                        <div class="flex gap-2">
+                            <select id="man-category" class="flex-1 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none">
+                                <!-- Populated dynamically -->
+                            </select>
+                            <button onclick="submitManualExpense()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm transition" data-i18n="addExpenseBtn">Add</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Expenses Feed -->
+                <div class="space-y-2.5">
+                    <div class="flex items-center justify-between px-1">
+                        <h3 class="font-extrabold text-xs uppercase tracking-wider text-slate-600" data-i18n="recentExpensesTitle">Recent Expenses</h3>
+                        <span id="home-expense-count" class="text-[11px] font-bold text-slate-400">0 items</span>
+                    </div>
+                    <div id="home-expenses-list" class="space-y-2">
+                        <!-- Dynamically rendered -->
+                    </div>
+                </div>
+            </main>
+
+            <!-- TAB 2: REPORTS (Today's Report vs Full Trip Report) -->
+            <section id="tab-reports" class="hidden p-4 space-y-4 flex-1">
+                <div class="bg-white p-1.5 rounded-2xl border border-slate-200 flex gap-1 shadow-sm">
+                    <button id="rep-btn-today" onclick="switchReportType('today')" class="flex-1 py-2.5 rounded-xl text-xs font-extrabold bg-indigo-600 text-white shadow-sm transition" data-i18n="todayReportBtn">Today's Report</button>
+                    <button id="rep-btn-full" onclick="switchReportType('full')" class="flex-1 py-2.5 rounded-xl text-xs font-extrabold text-slate-600 hover:bg-slate-50 transition" data-i18n="fullTripReportBtn">Full Trip Report</button>
+                </div>
+
+                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p id="rep-summary-label" class="text-xs font-semibold text-slate-500" data-i18n="totalSpentPeriod">Total Spent</p>
+                        <h3 id="rep-total-dest" class="text-xl font-extrabold text-slate-900 mt-0.5">0 THB</h3>
+                    </div>
+                    <div class="text-end">
+                        <span id="rep-count-badge" class="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-extrabold">0 items</span>
+                        <p id="rep-total-base" class="text-xs font-bold text-slate-500 mt-1">0.00 JOD</p>
+                    </div>
+                </div>
+
+                <div id="reports-list" class="space-y-2.5">
+                    <!-- Rendered dynamically -->
+                </div>
+            </section>
+
+            <!-- TAB 3: BUDGET TABLE (All Categories + Pocket Money Breakdown) -->
+            <section id="tab-budget" class="hidden p-4 space-y-4 flex-1">
+                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
+                    <h2 class="font-extrabold text-sm text-slate-900 mb-1" data-i18n="budgetTableTitle">Trip Budget Breakdown</h2>
+                    <p class="text-xs text-slate-500 mb-3" data-i18n="budgetTableSub">Allocated, spent, and remaining balances per category</p>
+
+                    <div class="overflow-x-auto -mx-2 px-2">
+                        <table class="w-full text-start border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-[10px] font-extrabold uppercase text-slate-400">
+                                    <th class="py-2.5 text-start" data-i18n="colCategory">Category</th>
+                                    <th class="py-2.5 text-end" data-i18n="colAllocated">Allocated</th>
+                                    <th class="py-2.5 text-end" data-i18n="colSpent">Spent</th>
+                                    <th class="py-2.5 text-end" data-i18n="colRemaining">Left</th>
+                                </tr>
+                            </thead>
+                            <tbody id="budget-table-body" class="divide-y divide-slate-100 text-xs">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: ACTIVE ANALYSIS -->
+            <section id="tab-analysis" class="hidden p-4 space-y-4 flex-1">
+                <!-- Key Metrics Grid -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase" data-i18n="budgetConsumedLabel">Budget Consumed</span>
+                        <div id="ana-consumed-pct" class="text-2xl font-extrabold text-indigo-600 mt-1">0%</div>
+                        <div id="ana-consumed-val" class="text-[11px] font-semibold text-slate-500 mt-0.5">0 THB</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase" data-i18n="highestCategoryLabel">Highest Spending</span>
+                        <div id="ana-top-cat" class="text-base font-extrabold text-slate-900 mt-1 truncate">-</div>
+                        <div id="ana-top-cat-val" class="text-[11px] font-semibold text-rose-500 mt-0.5">0 THB</div>
+                    </div>
+                </div>
+
+                <!-- Remaining Pocket Money Card -->
+                <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-3xl flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-indigo-900" data-i18n="pocketMoneyRemaining">Pocket Money Remaining</span>
+                        <div id="ana-pocket-dest" class="text-lg font-extrabold text-indigo-700 mt-0.5">0 THB</div>
+                    </div>
+                    <div id="ana-pocket-base" class="text-xs font-extrabold text-indigo-600 bg-white px-3 py-1.5 rounded-xl shadow-sm">0 JOD</div>
+                </div>
+
+                <!-- Spending by Category Progress Bars -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm space-y-3">
+                    <h3 class="font-extrabold text-xs uppercase tracking-wider text-slate-700" data-i18n="spendingByCategoryTitle">Spending by Category</h3>
+                    <div id="ana-categories-bars" class="space-y-3">
+                        <!-- Dynamically rendered -->
+                    </div>
+                </div>
+
+                <!-- Top 5 Expenses -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm space-y-3">
+                    <h3 class="font-extrabold text-xs uppercase tracking-wider text-slate-700" data-i18n="top5ExpensesTitle">Top 5 Highest Expenses</h3>
+                    <div id="ana-top5-list" class="space-y-2">
+                        <!-- Dynamically rendered -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: SETTINGS -->
+            <section id="tab-settings" class="hidden p-4 space-y-4 flex-1">
+                <!-- App Language -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                            <i class="fa-solid fa-language text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-sm text-slate-900" data-i18n="appLanguageLabel">App Language</h3>
+                            <p class="text-xs text-slate-500" data-i18n="appLanguageSub">Switch between English & Arabic</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleLanguage()" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold shadow-sm">
+                        <span id="settings-lang-btn">العربية</span>
+                    </button>
+                </div>
+
+                <!-- Voice Input & Voice Command Speaker Controls -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+                    <!-- Toggle 1: Voice Input (Mic) -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                <i class="fa-solid fa-microphone-lines text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-extrabold text-sm text-slate-900" data-i18n="voiceInputLabel">Voice Assistant Input</h3>
+                                <p class="text-xs text-slate-500" data-i18n="voiceInputSub">Enable microphone commands on Home</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="settings-voice-toggle" onchange="toggleVoiceSetting(this.checked)" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                    </div>
+
+                    <!-- Toggle 2: Voice Command Speaker (TTS Reply) -->
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center">
+                                <i class="fa-solid fa-volume-high text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-extrabold text-sm text-slate-900" data-i18n="voiceSpeakerLabel">Voice Command Speaker</h3>
+                                <p class="text-xs text-slate-500" data-i18n="voiceSpeakerSub">Spoken confirmation reply after commands</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="settings-speaker-toggle" onchange="toggleSpeakerSetting(this.checked)" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- Human Voice Selector Dropdown (Shown when Speaker is Enabled) -->
+                    <div id="speaker-voice-selector-box" class="pt-3 border-t border-slate-100 space-y-2">
+                        <label class="block text-xs font-bold text-slate-700" data-i18n="chooseSpeakerVoiceLabel">Choose Natural Speaker Voice</label>
+                        <div class="flex gap-2">
+                            <select id="settings-voice-select" onchange="selectSpeakerVoice(this.value)" class="flex-1 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none">
+                                <option value="">Default System Voice</option>
+                            </select>
+                            <button type="button" onclick="testSelectedSpeakerVoice()" class="px-3.5 py-2.5 rounded-xl bg-violet-50 text-violet-700 hover:bg-violet-100 text-xs font-extrabold transition shrink-0">
+                                <i class="fa-solid fa-play mr-1"></i> <span data-i18n="testVoiceBtn">Test</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Budget & Allocations -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                            <i class="fa-solid fa-pen-to-square text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-sm text-slate-900" data-i18n="editBudgetTitle">Edit Budget & Allocations</h3>
+                            <p class="text-xs text-slate-500" data-i18n="editBudgetSub">Modify total budget, pocket money, or any category</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2.5 pt-2">
+                        <select id="edit-budget-target" onchange="loadEditBudgetTargetValue()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none">
+                            <!-- Populated dynamically -->
+                        </select>
+                        <div id="edit-budget-current-info" class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-3 py-2 rounded-xl">
+                            Current: 0 THB (0 JOD)
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="number" id="edit-budget-new-val" placeholder="New Amount" step="any" class="col-span-2 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold focus:outline-none">
+                            <select id="edit-budget-curr-mode" class="px-2.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold text-slate-700 focus:outline-none">
+                                <option value="base">JOD</option>
+                                <option value="dest">THB</option>
+                            </select>
+                        </div>
+                        <button onclick="reviewBudgetEdit()" class="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold transition" data-i18n="reviewEditBtn">Review Budget Update</button>
+                    </div>
+                </div>
+
+                <!-- Trip Currencies & Exchange Rate -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                            <i class="fa-solid fa-coins text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-sm text-slate-900" data-i18n="tripCurrenciesTitle">Trip Currencies & Rate</h3>
+                            <p id="settings-curr-summary" class="text-xs text-slate-500">Base: JOD • Destination: THB</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 pt-1">
+                        <select id="set-base-curr" class="px-2.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold">
+                            <option value="JOD">JOD</option>
+                            <option value="USD">USD</option>
+                            <option value="SAR">SAR</option>
+                            <option value="AED">AED</option>
+                            <option value="EUR">EUR</option>
+                            <option value="GBP">GBP</option>
+                            <option value="KWD">KWD</option>
+                        </select>
+                        <select id="set-dest-curr" class="px-2.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold">
+                            <option value="THB">THB</option>
+                            <option value="TRY">TRY</option>
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="AED">AED</option>
+                            <option value="EGP">EGP</option>
+                            <option value="MYR">MYR</option>
+                            <option value="IDR">IDR</option>
+                            <option value="JPY">JPY</option>
+                        </select>
+                        <input type="number" id="set-rate-val" step="any" placeholder="Rate" class="px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold">
+                    </div>
+                    <button onclick="saveCurrencySettings()" class="w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-extrabold transition" data-i18n="updateCurrenciesBtn">Update Currencies</button>
+                </div>
+
+                <!-- Start New Trip Reset -->
+                <div class="pt-2">
+                    <button onclick="confirmResetNewTrip()" class="w-full py-3.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-extrabold transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span data-i18n="startNewTripBtn">Start a New Trip</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Bottom Navigation Bar (5 Tabs) -->
+            <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-2 flex items-center justify-around z-30">
+                <button onclick="switchTab('home')" id="nav-home" class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl text-indigo-600 font-extrabold transition">
+                    <i class="fa-solid fa-house text-base"></i>
+                    <span class="text-[10px]" data-i18n="navHome">Home</span>
+                </button>
+                <button onclick="switchTab('reports')" id="nav-reports" class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl text-slate-400 hover:text-slate-600 font-bold transition">
+                    <i class="fa-solid fa-file-invoice-dollar text-base"></i>
+                    <span class="text-[10px]" data-i18n="navReports">Reports</span>
+                </button>
+                <button onclick="switchTab('budget')" id="nav-budget" class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl text-slate-400 hover:text-slate-600 font-bold transition">
+                    <i class="fa-solid fa-table-list text-base"></i>
+                    <span class="text-[10px]" data-i18n="navBudget">Budget</span>
+                </button>
+                <button onclick="switchTab('analysis')" id="nav-analysis" class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl text-slate-400 hover:text-slate-600 font-bold transition">
+                    <i class="fa-solid fa-chart-pie text-base"></i>
+                    <span class="text-[10px]" data-i18n="navAnalysis">Analysis</span>
+                </button>
+                <button onclick="switchTab('settings')" id="nav-settings" class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl text-slate-400 hover:text-slate-600 font-bold transition">
+                    <i class="fa-solid fa-gear text-base"></i>
+                    <span class="text-[10px]" data-i18n="navSettings">Settings</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- MODALS (Voice Confirmation, Notifications, Action Confirm)-->
+        <!-- ========================================================= -->
+
+        <!-- 1. Editable Voice Expense Confirmation Modal -->
+        <div id="voice-confirm-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4 animate-fade-in">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </span>
+                        <h3 class="font-extrabold text-sm text-slate-900" data-i18n="confirmVoiceTitle">Confirm Voice Expense</h3>
+                    </div>
+                    <button onclick="closeVoiceConfirmModal()" class="text-slate-400 hover:text-slate-600">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <div id="voice-unknown-cat-alert" class="hidden p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
+                    <i class="fa-solid fa-circle-question mr-1"></i>
+                    <span data-i18n="unknownCategoryPrompt">Which category should this expense be deducted from?</span>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1" data-i18n="itemDescLabel">Item / Description</label>
+                        <input type="text" id="vconf-desc" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:border-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1" data-i18n="amountAndCurrencyLabel">Amount & Currency</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="number" id="vconf-amount" oninput="updateVoiceModalConversion()" step="any" class="col-span-2 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-base font-extrabold text-indigo-700 focus:outline-none focus:border-indigo-500">
+                            <select id="vconf-currency" onchange="updateVoiceModalConversion()" class="px-2.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold text-slate-800 focus:outline-none">
+                                <option value="dest">THB</option>
+                                <option value="base">JOD</option>
+                            </select>
+                        </div>
+                        <p id="vconf-converted-sub" class="text-xs font-semibold text-slate-500 mt-1">≈ 0.00 JOD</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1" data-i18n="deductFromLabel">Deduct From Category</label>
+                        <select id="vconf-category" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold text-slate-800 focus:outline-none">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex gap-2.5 pt-2">
+                    <button onclick="closeVoiceConfirmModal()" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold transition" data-i18n="cancelBtn">Cancel</button>
+                    <button onclick="confirmVoiceExpenseSave()" class="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-md transition" data-i18n="confirmSaveBtn">Confirm & Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Notifications Center Modal -->
+        <div id="notifications-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl max-h-[80vh] flex flex-col">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-bell text-indigo-600"></i>
+                        <h3 class="font-extrabold text-sm text-slate-900" data-i18n="notificationsTitle">Notifications & Alerts</h3>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="clearAllNotifications()" class="text-[11px] font-bold text-rose-500 hover:underline" data-i18n="clearAllBtn">Clear All</button>
+                        <button onclick="closeNotificationsModal()" class="text-slate-400 hover:text-slate-600">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="notifications-list" class="py-3 space-y-2.5 overflow-y-auto flex-1">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Generic Action Confirmation Modal (Used for Voice Delete/Edit/Clear, Budget Updates, Reset) -->
+        <div id="action-confirm-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+                <div class="flex items-center gap-3">
+                    <div id="aconf-icon-box" class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                        <i id="aconf-icon" class="fa-solid fa-circle-exclamation text-lg"></i>
+                    </div>
+                    <h3 id="aconf-title" class="font-extrabold text-sm text-slate-900">Confirm Action</h3>
+                </div>
+                <p id="aconf-message" class="text-xs text-slate-600 leading-relaxed"></p>
+                <div class="flex gap-2.5 pt-1">
+                    <button onclick="closeActionConfirmModal()" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold transition" data-i18n="cancelBtn">Cancel</button>
+                    <button id="aconf-confirm-btn" class="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-md transition" data-i18n="confirmBtn">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // =========================================================================
+        // 1. STATE & CONSTANTS
+        // =========================================================================
+        const STORAGE_KEY = 'my_travel_expense_v2_state';
+
+        const DEFAULT_RATES = {
+            'JOD_THB': 47.5, 'JOD_TRY': 48.0, 'JOD_EUR': 1.30, 'JOD_USD': 1.41, 'JOD_AED': 5.18, 'JOD_EGP': 68.5, 'JOD_MYR': 6.25, 'JOD_IDR': 22300, 'JOD_JPY': 215,
+            'USD_THB': 33.7, 'USD_TRY': 34.0, 'USD_EUR': 0.92, 'USD_AED': 3.67, 'USD_EGP': 48.6, 'USD_MYR': 4.43, 'USD_IDR': 15800, 'USD_JPY': 152,
+            'SAR_THB': 9.0,  'AED_THB': 9.18, 'EUR_THB': 36.5, 'GBP_THB': 43.2, 'KWD_THB': 110.0
+        };
+
+        const CATEGORIES = [
+            { id: 'hotels',        en: 'Hotels',        ar: 'الفنادق',     icon: 'fa-hotel',          color: 'indigo' },
+            { id: 'food',          en: 'Food',          ar: 'الطعام',     icon: 'fa-utensils',       color: 'amber' },
+            { id: 'entertainment', en: 'Entertainment', ar: 'الترفيه',    icon: 'fa-masks-theater',  color: 'pink' },
+            { id: 'transport',     en: 'Transport',     ar: 'المواصلات',  icon: 'fa-car-side',       color: 'sky' },
+            { id: 'activities',    en: 'Activities',    ar: 'الأنشطة',    icon: 'fa-compass',        color: 'emerald' },
+            { id: 'other',         en: 'Other',         ar: 'أخرى',       icon: 'fa-box-open',       color: 'slate' },
+            { id: 'pocket',        en: 'Pocket Money',  ar: 'مصروف الجيب', icon: 'fa-wallet',        color: 'violet' }
+        ];
+
+        const I18N = {
+            en: {
+                wizardSubtitle: 'Smart Trip Budget Planner',
+                step1Title: 'Trip Info',
+                step2Title: 'Allocate',
+                step3Title: 'Confirm',
+                tripNameLabel: 'Trip Name',
+                baseCurrencyLabel: 'Budget Currency',
+                destCurrencyLabel: 'Destination Currency',
+                totalBudgetLabel: 'Total Budget (in Budget Currency)',
+                exchangeRateLabel: 'Exchange Rate (1 Base =)',
+                convertedAmountLabel: 'Converted Total Amount:',
+                tripDaysLabel: 'Trip Duration (Days)',
+                confirmContinueBtn: 'Confirm & Allocate Budget',
+                remainingPocketMoney: 'Remaining Pocket Money',
+                overBudgetWarn: 'Allocations exceed total budget!',
+                enterAmountsIn: 'Enter amounts in:',
+                nextSummaryBtn: 'Next: Review Summary',
+                budgetSummaryTitle: 'Budget Allocation Summary',
+                netPocketMoneyTitle: 'Net Pocket Money',
+                dailyPocketAllowance: 'Daily Pocket Allowance:',
+                addExtraPocketBtn: 'Add Extra Pocket Money',
+                addBtn: 'Add',
+                startTripBtn: 'Confirm & Start Trip',
+                pocketMoneyRemaining: 'Pocket Money Remaining',
+                aiVoiceAssistant: 'AI Voice Assistant',
+                tapMicPrompt: 'Tap mic & say e.g. "Seafood restaurant 1000 baht" or "Delete last transaction"',
+                manualExpenseTitle: 'Add Expense Manually',
+                addExpenseBtn: 'Add',
+                recentExpensesTitle: 'Recent Expenses',
+                todayReportBtn: "Today's Report",
+                fullTripReportBtn: 'Full Trip Report',
+                totalSpentPeriod: 'Total Spent',
+                budgetTableTitle: 'Trip Budget Breakdown',
+                budgetTableSub: 'Allocated, spent, and remaining balances per category',
+                colCategory: 'Category',
+                colAllocated: 'Allocated',
+                colSpent: 'Spent',
+                colRemaining: 'Left',
+                budgetConsumedLabel: 'Budget Consumed',
+                highestCategoryLabel: 'Highest Spending',
+                spendingByCategoryTitle: 'Spending by Category',
+                top5ExpensesTitle: 'Top 5 Highest Expenses',
+                appLanguageLabel: 'App Language',
+                appLanguageSub: 'Switch between English & Arabic',
+                voiceInputLabel: 'Voice Assistant Input',
+                voiceInputSub: 'Enable microphone commands on Home',
+                voiceSpeakerLabel: 'Voice Command Speaker',
+                voiceSpeakerSub: 'Spoken confirmation reply after commands',
+                chooseSpeakerVoiceLabel: 'Choose Natural Speaker Voice',
+                testVoiceBtn: 'Test',
+                editBudgetTitle: 'Edit Budget & Allocations',
+                editBudgetSub: 'Modify total budget, pocket money, or any category',
+                reviewEditBtn: 'Review Budget Update',
+                tripCurrenciesTitle: 'Trip Currencies & Rate',
+                updateCurrenciesBtn: 'Update Currencies',
+                startNewTripBtn: 'Start a New Trip',
+                navHome: 'Home',
+                navReports: 'Reports',
+                navBudget: 'Budget',
+                navAnalysis: 'Analysis',
+                navSettings: 'Settings',
+                confirmVoiceTitle: 'Confirm Voice Expense',
+                unknownCategoryPrompt: 'Which category should this expense be deducted from?',
+                itemDescLabel: 'Item / Description',
+                amountAndCurrencyLabel: 'Amount & Currency',
+                deductFromLabel: 'Deduct From Category',
+                cancelBtn: 'Cancel',
+                confirmSaveBtn: 'Confirm & Save',
+                notificationsTitle: 'Notifications & Alerts',
+                clearAllBtn: 'Clear All',
+                confirmBtn: 'Confirm',
+                noExpensesYet: 'No expenses recorded yet.',
+                noNotifications: 'No notifications yet.',
+                closeBudgetBtn: 'Close Category Budget',
+                closedBadge: 'Closed'
+            },
+            ar: {
+                wizardSubtitle: 'مخطط ميزانية السفر الذكي',
+                step1Title: 'بيانات الرحلة',
+                step2Title: 'التوزيع',
+                step3Title: 'التأكيد',
+                tripNameLabel: 'اسم الرحلة',
+                baseCurrencyLabel: 'عملة الميزانية',
+                destCurrencyLabel: 'عملة بلد السفر',
+                totalBudgetLabel: 'الميزانية الكلية (بعملة الميزانية)',
+                exchangeRateLabel: 'سعر الصرف (1 أساسي =)',
+                convertedAmountLabel: 'إجمالي المبلغ بعد التحويل:',
+                tripDaysLabel: 'عدد أيام الرحلة',
+                confirmContinueBtn: 'موافق وتوزيع الميزانية',
+                remainingPocketMoney: 'مصروف الجيب المتبقي (Pocket Money)',
+                overBudgetWarn: 'توزيع البنود يتجاوز الميزانية الكلية!',
+                enterAmountsIn: 'إدخال المبالغ بعملة:',
+                nextSummaryBtn: 'التالي: مراجعة الملخص',
+                budgetSummaryTitle: 'ملخص توزيع الميزانية',
+                netPocketMoneyTitle: 'صافي مصروف الجيب',
+                dailyPocketAllowance: 'مصروف الجيب اليومي:',
+                addExtraPocketBtn: 'إضافة مصروف جيب إضافي',
+                addBtn: 'إضافة',
+                startTripBtn: 'تأكيد وبدء الرحلة',
+                pocketMoneyRemaining: 'المتبقي من مصروف الجيب',
+                aiVoiceAssistant: 'المساعد الصوتي الذكي',
+                tapMicPrompt: 'اضغط المايك وتحدث مثلاً: "أكلت من مطعم سي فود بـ 1000 بات" أو "ألغِ آخر عملية"',
+                manualExpenseTitle: 'إضافة مصروف يدوياً',
+                addExpenseBtn: 'إضافة',
+                recentExpensesTitle: 'أحدث المصاريف',
+                todayReportBtn: 'تقرير اليوم',
+                fullTripReportBtn: 'تقرير الرحلة كامل',
+                totalSpentPeriod: 'إجمالي المصروف',
+                budgetTableTitle: 'جدول بنود الميزانية',
+                budgetTableSub: 'المخصص والمصروف والمتبقي لكل بند بالعملتين',
+                colCategory: 'البند',
+                colAllocated: 'المخصص',
+                colSpent: 'المصروف',
+                colRemaining: 'المتبقي',
+                budgetConsumedLabel: 'نسبة استهلاك الميزانية',
+                highestCategoryLabel: 'الأكثر إنفاقاً',
+                spendingByCategoryTitle: 'الإنفاق حسب البند',
+                top5ExpensesTitle: 'أعلى 5 مصاريف في الرحلة',
+                appLanguageLabel: 'لغة التطبيق',
+                appLanguageSub: 'التبديل الفوري بين العربية والإنجليزية',
+                voiceInputLabel: 'إدخال الأوامر الصوتية',
+                voiceInputSub: 'تفعيل زر المايكروفون في الصفحة الرئيسية',
+                voiceSpeakerLabel: 'الرد الصوتي للمساعد (Speaker)',
+                voiceSpeakerSub: 'نطق تأكيد العمليات صوتياً بعد التنفيذ',
+                chooseSpeakerVoiceLabel: 'اختيار صوت المتحدث الطبيعي',
+                testVoiceBtn: 'تجربة',
+                editBudgetTitle: 'تعديل الميزانية والبنود',
+                editBudgetSub: 'تعديل الميزانية الكلية أو مصروف الجيب أو أي بند',
+                reviewEditBtn: 'مراجعة تعديل الميزانية',
+                tripCurrenciesTitle: 'عملات الرحلة وسعر الصرف',
+                updateCurrenciesBtn: 'تحديث العملات',
+                startNewTripBtn: 'بدء رحلة جديدة',
+                navHome: 'الرئيسية',
+                navReports: 'التقارير',
+                navBudget: 'الميزانية',
+                navAnalysis: 'التحليلات',
+                navSettings: 'الإعدادات',
+                confirmVoiceTitle: 'تأكيد المصروف الصوتي',
+                unknownCategoryPrompt: 'على أي بند تحب أن يتم خصم هذا المصروف؟',
+                itemDescLabel: 'اسم المصروف / الوصف',
+                amountAndCurrencyLabel: 'المبلغ والعملة',
+                deductFromLabel: 'خصم من بند',
+                cancelBtn: 'إلغاء',
+                confirmSaveBtn: 'تأكيد وحفظ',
+                notificationsTitle: 'التنبيهات والإشعارات',
+                clearAllBtn: 'مسح الكل',
+                confirmBtn: 'تأكيد',
+                noExpensesYet: 'لا توجد مصاريف مسجلة بعد.',
+                noNotifications: 'لا توجد تنبيهات حالياً.',
+                closeBudgetBtn: 'إغلاق ميزانية البند',
+                closedBadge: 'مغلق'
+            }
+        };
+
+        let appState = {
+            lang: 'en',
+            tripStarted: false,
+            tripName: '',
+            baseCurrency: 'JOD',
+            destCurrency: 'THB',
+            exchangeRate: 47.5,
+            days: 10,
+            startDate: new Date().toISOString().split('T')[0],
+            totalBudgetBase: 0,
+            allocationsBase: {
+                hotels: 0,
+                food: 0,
+                entertainment: 0,
+                transport: 0,
+                activities: 0,
+                other: 0
+            },
+            closedCategories: {},
+            expenses: [],
+            notifications: [],
+            settings: {
+                voiceEnabled: true,
+                speakerEnabled: true,
+                selectedVoiceURI: ''
+            }
+        };
+
+        let wizardAllocInputMode = 'base';
+        let currentReportType = 'today';
+        let pendingActionCallback = null;
+        let recognition = null;
+        let isListening = false;
+
+        // =========================================================================
+        // 2. PERSISTENCE & INITIALIZATION
+        // =========================================================================
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    appState = {
+                        ...appState,
+                        ...parsed,
+                        allocationsBase: { ...appState.allocationsBase, ...(parsed.allocationsBase || {}) },
+                        settings: { ...appState.settings, ...(parsed.settings || {}) }
+                    };
+                }
+            } catch (e) {
+                console.error('Error loading state:', e);
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error('Error saving state:', e);
+            }
+        }
+
+        function bootApp() {
+            loadState();
+            initPwaManifest();
+            applyLanguageUI();
+            initSpeechSynthesisVoices();
+
+            if (appState.tripStarted) {
+                showMainApp();
+            } else {
+                showSetupWizard();
+            }
+        }
+
+        // =========================================================================
+        // 3. LANGUAGE & FORMATTING HELPERS
+        // =========================================================================
+        function toggleLanguage() {
+            appState.lang = appState.lang === 'en' ? 'ar' : 'en';
+            saveState();
+            applyLanguageUI();
+            populateSpeakerVoicesList();
+            if (appState.tripStarted) {
+                refreshAllMainViews();
+            } else {
+                renderWizardStep2Categories();
+            }
+        }
+
+        function applyLanguageUI() {
+            const isAr = appState.lang === 'ar';
+            document.documentElement.lang = appState.lang;
+            document.documentElement.dir = isAr ? 'rtl' : 'ltr';
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (I18N[appState.lang][key]) {
+                    el.textContent = I18N[appState.lang][key];
+                }
+            });
+
+            const wizLangBtn = document.getElementById('wizard-lang-btn');
+            if (wizLangBtn) wizLangBtn.textContent = isAr ? 'English' : 'عربي';
+
+            const setLangBtn = document.getElementById('settings-lang-btn');
+            if (setLangBtn) setLangBtn.textContent = isAr ? 'English' : 'العربية';
+        }
+
+        function getCatName(catId) {
+            const cat = CATEGORIES.find(c => c.id === catId);
+            if (!cat) return catId;
+            return appState.lang === 'ar' ? cat.ar : cat.en;
+        }
+
+        function fmtNum(n, decimals = 0) {
+            const val = Number(n) || 0;
+            return val.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+
+        function toDest(baseAmount) {
+            return (Number(baseAmount) || 0) * (Number(appState.exchangeRate) || 1);
+        }
+
+        function toBase(destAmount) {
+            const rate = Number(appState.exchangeRate) || 1;
+            return (Number(destAmount) || 0) / rate;
+        }
+
+        function getAllocatedSumBase() {
+            const a = appState.allocationsBase;
+            return (Number(a.hotels) || 0) +
+                   (Number(a.food) || 0) +
+                   (Number(a.entertainment) || 0) +
+                   (Number(a.transport) || 0) +
+                   (Number(a.activities) || 0) +
+                   (Number(a.other) || 0);
+        }
+
+        function getPocketAllocatedBase() {
+            return Math.max(0, (Number(appState.totalBudgetBase) || 0) - getAllocatedSumBase());
+        }
+
+        function getCategorySpentBase(catId) {
+            return appState.expenses
+                .filter(e => e.category === catId)
+                .reduce((sum, e) => sum + (Number(e.amountBase) || 0), 0);
+        }
+
+        function getTotalSpentBase() {
+            return appState.expenses.reduce((sum, e) => sum + (Number(e.amountBase) || 0), 0);
+        }
+
+        function getTripDayInfo() {
+            const start = new Date(appState.startDate || new Date().toISOString().split('T')[0]);
+            const now = new Date();
+            const diffDays = Math.floor((now - start) / (1000 * 60 * 60 * 24)) + 1;
+            const currentDay = Math.min(Math.max(1, diffDays), appState.days || 1);
+            const remainingDays = Math.max(1, (appState.days || 1) - currentDay + 1);
+            return { currentDay, remainingDays };
+        }
+
+        function showToast(msg, type = 'success') {
+            const banner = document.getElementById('toast-banner');
+            const icon = document.getElementById('toast-icon');
+            const text = document.getElementById('toast-message');
+            text.textContent = msg;
+
+            if (type === 'error') {
+                icon.className = 'fa-solid fa-circle-xmark text-rose-400 text-lg';
+            } else if (type === 'warn') {
+                icon.className = 'fa-solid fa-triangle-exclamation text-amber-400 text-lg';
+            } else {
+                icon.className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
+            }
+
+            banner.classList.remove('hidden');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => {
+                banner.classList.add('hidden');
+            }, 3500);
+        }
+
+        // =========================================================================
+        // 4. SETUP WIZARD FLOW (STEPS 1 -> 2 -> 3)
+        // =========================================================================
+        function showSetupWizard() {
+            document.getElementById('setup-wizard').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+            updateWizardRate();
+        }
+
+        function updateWizardRate() {
+            const base = document.getElementById('wiz-base-curr').value;
+            const dest = document.getElementById('wiz-dest-curr').value;
+            document.getElementById('wiz-base-curr-badge').textContent = base;
+            document.getElementById('wiz-dest-curr-small').textContent = dest;
+
+            const key = `${base}_${dest}`;
+            const revKey = `${dest}_${base}`;
+            let rate = 1;
+            if (base === dest) rate = 1;
+            else if (DEFAULT_RATES[key]) rate = DEFAULT_RATES[key];
+            else if (DEFAULT_RATES[revKey]) rate = +(1 / DEFAULT_RATES[revKey]).toFixed(4);
+            else rate = 10;
+
+            document.getElementById('wiz-rate').value = rate;
+            calculateWizardConversion();
+        }
+
+        function calculateWizardConversion() {
+            const total = parseFloat(document.getElementById('wiz-total-budget').value) || 0;
+            const rate = parseFloat(document.getElementById('wiz-rate').value) || 1;
+            const dest = document.getElementById('wiz-dest-curr').value;
+            document.getElementById('wiz-converted-total').textContent = `${fmtNum(total * rate, 0)} ${dest}`;
+        }
+
+        function goToWizardStep1() {
+            document.getElementById('wizard-step-1').classList.remove('hidden');
+            document.getElementById('wizard-step-2').classList.add('hidden');
+            document.getElementById('wizard-step-3').classList.add('hidden');
+            updateWizardBadges(1);
+        }
+
+        function goToWizardStep2() {
+            const name = document.getElementById('wiz-trip-name').value.trim();
+            const total = parseFloat(document.getElementById('wiz-total-budget').value);
+            const rate = parseFloat(document.getElementById('wiz-rate').value);
+            const days = parseInt(document.getElementById('wiz-days').value, 10);
+
+            if (!name) {
+                showToast(appState.lang === 'ar' ? 'يرجى إدخال اسم الرحلة' : 'Please enter a trip name', 'error');
+                return;
+            }
+            if (!total || total <= 0) {
+                showToast(appState.lang === 'ar' ? 'يرجى إدخال الميزانية الكلية' : 'Please enter a valid total budget', 'error');
+                return;
+            }
+            if (!rate || rate <= 0) {
+                showToast(appState.lang === 'ar' ? 'يرجى إدخال سعر صرف صحيح' : 'Please enter a valid exchange rate', 'error');
+                return;
+            }
+
+            appState.tripName = name;
+            appState.baseCurrency = document.getElementById('wiz-base-curr').value;
+            appState.destCurrency = document.getElementById('wiz-dest-curr').value;
+            appState.totalBudgetBase = total;
+            appState.exchangeRate = rate;
+            appState.days = days > 0 ? days : 7;
+
+            document.getElementById('alloc-mode-base').textContent = appState.baseCurrency;
+            document.getElementById('alloc-mode-dest').textContent = appState.destCurrency;
+            document.getElementById('wiz2-total-badge').textContent = `Total: ${fmtNum(total, 2)} ${appState.baseCurrency}`;
+
+            renderWizardStep2Categories();
+            recalcWizardStep2Pocket();
+
+            document.getElementById('wizard-step-1').classList.add('hidden');
+            document.getElementById('wizard-step-2').classList.remove('hidden');
+            document.getElementById('wizard-step-3').classList.add('hidden');
+            updateWizardBadges(2);
+        }
+
+        function setAllocInputMode(mode) {
+            wizardAllocInputMode = mode;
+            const baseBtn = document.getElementById('alloc-mode-base');
+            const destBtn = document.getElementById('alloc-mode-dest');
+            if (mode === 'base') {
+                baseBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-extrabold bg-white text-indigo-600 shadow-sm transition';
+                destBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-extrabold text-slate-500 transition';
+            } else {
+                destBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-extrabold bg-white text-indigo-600 shadow-sm transition';
+                baseBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-extrabold text-slate-500 transition';
+            }
+            renderWizardStep2Categories();
+        }
+
+        function renderWizardStep2Categories() {
+            const container = document.getElementById('wiz2-categories-list');
+            const editableCats = CATEGORIES.filter(c => c.id !== 'pocket');
+            const currSymbol = wizardAllocInputMode === 'base' ? appState.baseCurrency : appState.destCurrency;
+
+            container.innerHTML = editableCats.map(cat => {
+                const baseVal = appState.allocationsBase[cat.id] || 0;
+                const displayVal = wizardAllocInputMode === 'base'
+                    ? (baseVal > 0 ? baseVal : '')
+                    : (baseVal > 0 ? Math.round(toDest(baseVal)) : '');
+                const secondaryText = wizardAllocInputMode === 'base'
+                    ? `≈ ${fmtNum(toDest(baseVal), 0)} ${appState.destCurrency}`
+                    : `≈ ${fmtNum(baseVal, 2)} ${appState.baseCurrency}`;
+
+                return `
+                    <div class="flex items-center justify-between gap-3 py-1.5 border-b border-slate-50 last:border-0">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-8 h-8 rounded-xl bg-slate-100 text-indigo-600 flex items-center justify-center shrink-0">
+                                <i class="fa-solid ${cat.icon} text-xs"></i>
+                            </div>
+                            <div class="truncate">
+                                <div class="text-xs font-extrabold text-slate-800">${getCatName(cat.id)}</div>
+                                <div id="wiz2-sub-${cat.id}" class="text-[10px] font-semibold text-slate-400">${secondaryText}</div>
+                            </div>
+                        </div>
+                        <div class="relative w-32 shrink-0">
+                            <input type="number" step="any" min="0" value="${displayVal}" placeholder="0"
+                                oninput="onWizardAllocInput('${cat.id}', this.value)"
+                                class="w-full ps-3 pe-10 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold text-right focus:outline-none focus:border-indigo-500">
+                            <span class="absolute inset-y-0 end-2.5 flex items-center text-[10px] font-bold text-slate-400">${currSymbol}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function onWizardAllocInput(catId, rawVal) {
+            const num = parseFloat(rawVal) || 0;
+            const baseVal = wizardAllocInputMode === 'base' ? num : toBase(num);
+            appState.allocationsBase[catId] = baseVal;
+
+            const subEl = document.getElementById(`wiz2-sub-${catId}`);
+            if (subEl) {
+                subEl.textContent = wizardAllocInputMode === 'base'
+                    ? `≈ ${fmtNum(toDest(baseVal), 0)} ${appState.destCurrency}`
+                    : `≈ ${fmtNum(baseVal, 2)} ${appState.baseCurrency}`;
+            }
+            recalcWizardStep2Pocket();
+        }
+
+        function recalcWizardStep2Pocket() {
+            const allocated = getAllocatedSumBase();
+            const remainingBase = appState.totalBudgetBase - allocated;
+            const remainingDest = toDest(remainingBase);
+
+            document.getElementById('wiz2-pocket-dest').textContent = `${fmtNum(remainingDest, 0)} ${appState.destCurrency}`;
+            document.getElementById('wiz2-pocket-base').textContent = `${fmtNum(remainingBase, 2)} ${appState.baseCurrency}`;
+
+            const warnEl = document.getElementById('wiz2-overbudget-warn');
+            if (remainingBase < -0.001) {
+                warnEl.classList.remove('hidden');
+            } else {
+                warnEl.classList.add('hidden');
+            }
+        }
+
+        function goToWizardStep3() {
+            if (getAllocatedSumBase() > appState.totalBudgetBase + 0.001) {
+                showToast(I18N[appState.lang].overBudgetWarn, 'error');
+                return;
+            }
+            renderWizardStep3Summary();
+            document.getElementById('wizard-step-1').classList.add('hidden');
+            document.getElementById('wizard-step-2').classList.add('hidden');
+            document.getElementById('wizard-step-3').classList.remove('hidden');
+            updateWizardBadges(3);
+        }
+
+        function renderWizardStep3Summary() {
+            document.getElementById('wiz3-trip-subtitle').textContent = `${appState.tripName} • ${appState.days} ${appState.lang === 'ar' ? 'أيام' : 'Days'}`;
+            const editableCats = CATEGORIES.filter(c => c.id !== 'pocket');
+
+            document.getElementById('wiz3-breakdown').innerHTML = editableCats.map(cat => {
+                const baseVal = appState.allocationsBase[cat.id] || 0;
+                const destVal = toDest(baseVal);
+                return `
+                    <div class="flex items-center justify-between py-1.5 border-b border-slate-50 last:border-0">
+                        <span class="font-bold text-slate-700"><i class="fa-solid ${cat.icon} text-indigo-500 w-5"></i> ${getCatName(cat.id)}</span>
+                        <div class="text-end">
+                            <span class="font-extrabold text-slate-900">${fmtNum(destVal, 0)} ${appState.destCurrency}</span>
+                            <span class="text-slate-400 text-[11px] ms-1">(${fmtNum(baseVal, 2)} ${appState.baseCurrency})</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const pocketBase = getPocketAllocatedBase();
+            const pocketDest = toDest(pocketBase);
+            const dailyBase = pocketBase / (appState.days || 1);
+            const dailyDest = pocketDest / (appState.days || 1);
+
+            document.getElementById('wiz3-days-pill').textContent = `${appState.days} ${appState.lang === 'ar' ? 'أيام' : 'Days'}`;
+            document.getElementById('wiz3-pocket-dest').textContent = `${fmtNum(pocketDest, 0)} ${appState.destCurrency}`;
+            document.getElementById('wiz3-pocket-base').textContent = `${fmtNum(pocketBase, 2)} ${appState.baseCurrency}`;
+            document.getElementById('wiz3-daily-dest').textContent = `${fmtNum(dailyDest, 0)} ${appState.destCurrency} / ${appState.lang === 'ar' ? 'يوم' : 'day'}`;
+            document.getElementById('wiz3-daily-base').textContent = `${fmtNum(dailyBase, 2)} ${appState.baseCurrency} / ${appState.lang === 'ar' ? 'يوم' : 'day'}`;
+        }
+
+        function toggleExtraPocketBox() {
+            const box = document.getElementById('extra-pocket-box');
+            box.classList.toggle('hidden');
+            document.getElementById('extra-pocket-input').placeholder = `${appState.lang === 'ar' ? 'المبلغ بـ' : 'Amount in'} ${appState.baseCurrency}`;
+        }
+
+        function applyExtraPocketMoney() {
+            const extra = parseFloat(document.getElementById('extra-pocket-input').value);
+            if (!extra || extra <= 0) return;
+            appState.totalBudgetBase += extra;
+            document.getElementById('extra-pocket-input').value = '';
+            document.getElementById('extra-pocket-box').classList.add('hidden');
+            renderWizardStep3Summary();
+            showToast(appState.lang === 'ar' ? `تمت إضافة ${fmtNum(extra, 2)} ${appState.baseCurrency} لمصروف الجيب` : `Added ${fmtNum(extra, 2)} ${appState.baseCurrency} to Pocket Money`);
+        }
+
+        function updateWizardBadges(activeStep) {
+            [1, 2, 3].forEach(s => {
+                const badge = document.getElementById(`step-badge-${s}`);
+                if (s <= activeStep) {
+                    badge.className = 'w-7 h-7 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center';
+                } else {
+                    badge.className = 'w-7 h-7 rounded-full bg-slate-200 text-slate-500 text-xs font-bold flex items-center justify-center';
+                }
+            });
+        }
+
+        function confirmAndStartTrip() {
+            appState.tripStarted = true;
+            appState.startDate = new Date().toISOString().split('T')[0];
+            addNotification('info', appState.lang === 'ar'
+                ? `بدأت رحلة "${appState.tripName}" بنجاح! مصروف الجيب: ${fmtNum(toDest(getPocketAllocatedBase()), 0)} ${appState.destCurrency}`
+                : `Trip "${appState.tripName}" started! Pocket Money: ${fmtNum(toDest(getPocketAllocatedBase()), 0)} ${appState.destCurrency}`);
+            saveState();
+            showMainApp();
+        }
+
+        // =========================================================================
+        // 5. MAIN APP NAVIGATION & DASHBOARD RENDERING
+        // =========================================================================
+        function showMainApp() {
+            document.getElementById('setup-wizard').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            refreshAllMainViews();
+        }
+
+        function switchTab(tabName) {
+            const tabs = ['home', 'reports', 'budget', 'analysis', 'settings'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                const navBtn = document.getElementById(`nav-${t}`);
+                navBtn.className = 'flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl text-slate-400 hover:text-slate-600 font-bold transition';
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabName}`).className = 'flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl text-indigo-600 font-extrabold transition';
+
+            if (tabName === 'reports') renderReportsTab();
+            if (tabName === 'budget') renderBudgetTab();
+            if (tabName === 'analysis') renderAnalysisTab();
+            if (tabName === 'settings') renderSettingsTab();
+        }
+
+        function refreshAllMainViews() {
+            const { currentDay } = getTripDayInfo();
+            document.getElementById('header-trip-name').textContent = appState.tripName;
+            document.getElementById('header-trip-meta').textContent =
+                `${appState.lang === 'ar' ? 'يوم' : 'Day'} ${currentDay} / ${appState.days} • 1 ${appState.baseCurrency} = ${appState.exchangeRate} ${appState.destCurrency}`;
+
+            // Update currency dropdowns in Manual Entry & Voice Modal
+            ['man-currency', 'vconf-currency', 'edit-budget-curr-mode'].forEach(selId => {
+                const sel = document.getElementById(selId);
+                if (sel && sel.options.length >= 2) {
+                    const destOpt = Array.from(sel.options).find(o => o.value === 'dest');
+                    const baseOpt = Array.from(sel.options).find(o => o.value === 'base');
+                    if (destOpt) destOpt.textContent = appState.destCurrency;
+                    if (baseOpt) baseOpt.textContent = appState.baseCurrency;
+                }
+            });
+
+            // Populate Category Selects
+            const catOptionsHtml = CATEGORIES.map(c => {
+                const isClosed = appState.closedCategories[c.id];
+                const label = `${getCatName(c.id)}${isClosed ? ` (${I18N[appState.lang].closedBadge})` : ''}`;
+                return `<option value="${c.id}">${label}</option>`;
+            }).join('');
+            document.getElementById('man-category').innerHTML = catOptionsHtml;
+            document.getElementById('man-category').value = 'pocket';
+            document.getElementById('vconf-category').innerHTML = catOptionsHtml;
+
+            // Voice Assistant visibility
+            const voiceCard = document.getElementById('voice-assistant-card');
+            if (appState.settings.voiceEnabled) {
+                voiceCard.classList.remove('hidden');
+            } else {
+                voiceCard.classList.add('hidden');
+            }
+
+            renderHomeSummaryAndFeed();
+            updateNotifBadge();
+            renderReportsTab();
+            renderBudgetTab();
+            renderAnalysisTab();
+            renderSettingsTab();
+        }
+
+        function renderHomeSummaryAndFeed() {
+            const pocketAllocBase = getPocketAllocatedBase();
+            const pocketSpentBase = getCategorySpentBase('pocket');
+            const pocketRemBase = pocketAllocBase - pocketSpentBase;
+            const pocketRemDest = toDest(pocketRemBase);
+
+            const { remainingDays } = getTripDayInfo();
+            const dailyAllowanceDest = Math.max(0, pocketRemDest) / remainingDays;
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todaySpentDest = appState.expenses
+                .filter(e => e.date === todayStr)
+                .reduce((s, e) => s + toDest(e.amountBase), 0);
+
+            document.getElementById('home-pocket-dest').textContent = `${fmtNum(pocketRemDest, 0)} ${appState.destCurrency}`;
+            document.getElementById('home-pocket-base').textContent = `≈ ${fmtNum(pocketRemBase, 2)} ${appState.baseCurrency}`;
+            document.getElementById('home-daily-badge').textContent = `${appState.lang === 'ar' ? 'اليومي:' : 'Daily:'} ${fmtNum(dailyAllowanceDest, 0)} ${appState.destCurrency}`;
+            document.getElementById('home-today-spent').textContent = `${appState.lang === 'ar' ? 'مصروف اليوم:' : 'Today:'} ${fmtNum(todaySpentDest, 0)} ${appState.destCurrency}`;
+
+            const pct = pocketAllocBase > 0 ? Math.max(0, Math.min(100, (pocketRemBase / pocketAllocBase) * 100)) : 0;
+            const bar = document.getElementById('home-pocket-bar');
+            bar.style.width = `${pct}%`;
+            bar.className = `h-full rounded-full transition-all duration-500 ${pct < 20 ? 'bg-rose-400' : pct < 50 ? 'bg-amber-400' : 'bg-emerald-400'}`;
+
+            // Render Recent Expenses
+            const listEl = document.getElementById('home-expenses-list');
+            document.getElementById('home-expense-count').textContent = `${appState.expenses.length} ${appState.lang === 'ar' ? 'عملية' : 'items'}`;
+
+            if (appState.expenses.length === 0) {
+                listEl.innerHTML = `<div class="bg-white p-6 rounded-3xl border border-slate-100 text-center text-xs text-slate-400 font-medium">${I18N[appState.lang].noExpensesYet}</div>`;
+                return;
+            }
+
+            listEl.innerHTML = appState.expenses.slice(0, 15).map(exp => renderExpenseCardHtml(exp)).join('');
+        }
+
+        function renderExpenseCardHtml(exp) {
+            const cat = CATEGORIES.find(c => c.id === exp.category) || CATEGORIES[6];
+            const destVal = toDest(exp.amountBase);
+            return `
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                            <i class="fa-solid ${cat.icon} text-sm"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="font-extrabold text-xs text-slate-900 truncate">${escapeHtml(exp.description)}</h4>
+                            <div class="flex items-center gap-2 mt-0.5">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">${getCatName(exp.category)}</span>
+                                <span class="text-[10px] text-slate-400">${exp.time || ''}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2.5 shrink-0">
+                        <div class="text-end">
+                            <div class="text-xs font-extrabold text-slate-900">${fmtNum(destVal, 0)} ${appState.destCurrency}</div>
+                            <div class="text-[10px] font-semibold text-slate-400">${fmtNum(exp.amountBase, 2)} ${appState.baseCurrency}</div>
+                        </div>
+                        <button onclick="deleteExpenseById('${exp.id}')" class="w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-500 flex items-center justify-center transition">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // =========================================================================
+        // 6. EXPENSE ADD / DELETE & SMART ALERTS ENGINE
+        // =========================================================================
+        function updateManualConvertHint() {
+            const amt = parseFloat(document.getElementById('man-amount').value) || 0;
+            const mode = document.getElementById('man-currency').value;
+            const hint = document.getElementById('man-convert-hint');
+            if (mode === 'dest') {
+                hint.textContent = `≈ ${fmtNum(toBase(amt), 2)} ${appState.baseCurrency}`;
+            } else {
+                hint.textContent = `≈ ${fmtNum(toDest(amt), 0)} ${appState.destCurrency}`;
+            }
+        }
+
+        function submitManualExpense() {
+            const desc = document.getElementById('man-desc').value.trim();
+            const amt = parseFloat(document.getElementById('man-amount').value);
+            const currMode = document.getElementById('man-currency').value;
+            const category = document.getElementById('man-category').value;
+
+            if (!desc) {
+                showToast(appState.lang === 'ar' ? 'يرجى كتابة وصف المصروف' : 'Please enter expense description', 'error');
+                return;
+            }
+            if (!amt || amt <= 0) {
+                showToast(appState.lang === 'ar' ? 'يرجى إدخال مبلغ صحيح' : 'Please enter a valid amount', 'error');
+                return;
+            }
+
+            const amountBase = currMode === 'base' ? amt : toBase(amt);
+            recordNewExpense(desc, amountBase, category);
+
+            document.getElementById('man-desc').value = '';
+            document.getElementById('man-amount').value = '';
+            updateManualConvertHint();
+        }
+
+        function recordNewExpense(description, amountBase, category) {
+            const now = new Date();
+            const expense = {
+                id: 'exp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                description,
+                amountBase: Number(amountBase),
+                category,
+                date: now.toISOString().split('T')[0],
+                time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+
+            appState.expenses.unshift(expense);
+
+            const destAmtStr = `${fmtNum(toDest(amountBase), 0)} ${appState.destCurrency}`;
+            const baseAmtStr = `${fmtNum(amountBase, 2)} ${appState.baseCurrency}`;
+            const catName = getCatName(category);
+
+            // 1. Standard Add Notification
+            addNotification('add', appState.lang === 'ar'
+                ? `تمت إضافة مصروف جديد: "${description}" بقيمة ${destAmtStr} (${baseAmtStr}) ضمن ${catName}.`
+                : `New expense added: "${description}" for ${destAmtStr} (${baseAmtStr}) under ${catName}.`);
+
+            // 2. Check Category Exhaustion (for non-pocket categories)
+            if (category !== 'pocket') {
+                const allocBase = Number(appState.allocationsBase[category]) || 0;
+                const spentBase = getCategorySpentBase(category);
+                if (allocBase > 0 && spentBase >= allocBase - 0.001 && !appState.closedCategories[category]) {
+                    addNotification('category_done', appState.lang === 'ar'
+                        ? `تم استهلاك ميزانية "${catName}" بالكامل (${fmtNum(toDest(allocBase), 0)} ${appState.destCurrency}). هل تود إغلاق هذا البند؟`
+                        : `Budget for "${catName}" is fully used (${fmtNum(toDest(allocBase), 0)} ${appState.destCurrency}). Close this category?`,
+                        { categoryId: category });
+                }
+            }
+
+            // 3. Check Daily Pocket Money Limit Overrun
+            if (category === 'pocket') {
+                checkDailyPocketLimitAlert();
+            }
+
+            saveState();
+            refreshAllMainViews();
+            showToast(appState.lang === 'ar'
+                ? `تم خصم ${destAmtStr} (${description})`
+                : `Added ${description} (${destAmtStr})`);
+        }
+
+        function checkDailyPocketLimitAlert() {
+            const pocketAllocBase = getPocketAllocatedBase();
+            const pocketSpentBase = getCategorySpentBase('pocket');
+            const pocketRemBase = pocketAllocBase - pocketSpentBase;
+            const { remainingDays } = getTripDayInfo();
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todayPocketSpentBase = appState.expenses
+                .filter(e => e.category === 'pocket' && e.date === todayStr)
+                .reduce((s, e) => s + e.amountBase, 0);
+
+            // Daily target before today's spending
+            const beforeTodayBase = pocketRemBase + todayPocketSpentBase;
+            const dailyLimitBase = Math.max(0, beforeTodayBase) / remainingDays;
+
+            if (dailyLimitBase > 0 && todayPocketSpentBase > dailyLimitBase + 0.01) {
+                const overBase = todayPocketSpentBase - dailyLimitBase;
+                const newDailyBase = Math.max(0, pocketRemBase) / Math.max(1, remainingDays - 1);
+                addNotification('pocket_warn', appState.lang === 'ar'
+                    ? `تنبيه مصروف الجيب: تجاوزت الحد اليومي بمقدار ${fmtNum(toDest(overBase), 0)} ${appState.destCurrency}. المتبقي للأيام القادمة (${remainingDays} يوم): ${fmtNum(toDest(pocketRemBase), 0)} ${appState.destCurrency} بمعدل ${fmtNum(toDest(newDailyBase), 0)} ${appState.destCurrency}/يوم.`
+                    : `Pocket Money Alert: Exceeded daily limit by ${fmtNum(toDest(overBase), 0)} ${appState.destCurrency}. Remaining for ${remainingDays} days: ${fmtNum(toDest(pocketRemBase), 0)} ${appState.destCurrency} (${fmtNum(toDest(newDailyBase), 0)} ${appState.destCurrency}/day).`);
+            }
+        }
+
+        function deleteExpenseById(id) {
+            const idx = appState.expenses.findIndex(e => e.id === id);
+            if (idx === -1) return;
+            const removed = appState.expenses[idx];
+            appState.expenses.splice(idx, 1);
+
+            addNotification('delete', appState.lang === 'ar'
+                ? `تم حذف مصروف: "${removed.description}" بقيمة ${fmtNum(toDest(removed.amountBase), 0)} ${appState.destCurrency}.`
+                : `Expense deleted: "${removed.description}" (${fmtNum(toDest(removed.amountBase), 0)} ${appState.destCurrency}).`);
+
+            saveState();
+            refreshAllMainViews();
+            showToast(appState.lang === 'ar' ? 'تم حذف المصروف' : 'Expense deleted', 'warn');
+        }
+
+        // =========================================================================
+        // 7. OFFLINE BILINGUAL AI VOICE NLP & COMMAND ENGINE
+        // =========================================================================
+        const AR_TO_EN_GLOSSARY = {
+            'مساج': 'Massage',
+            'تدليك': 'Massage',
+            'سي فود': 'Seafood',
+            'مأكولات بحرية': 'Seafood',
+            'برجر': 'Burger',
+            'ريبابليك برجر': 'Republic Burger',
+            'الساخن': 'Al-Sakhen',
+            'قهوة': 'Coffee',
+            'كوفي': 'Coffee',
+            'تاكسي': 'Taxi',
+            'تكسي': 'Taxi',
+            'قطار': 'Train',
+            'مترو': 'Metro',
+            'فندق': 'Hotel',
+            'تذكرة': 'Ticket',
+            'تذاكر': 'Tickets',
+            'غداء': 'Lunch',
+            'عشاء': 'Dinner',
+            'فطور': 'Breakfast',
+            'مانغو ستيكي رايس': 'Mango Sticky Rice',
+            'تسوق': 'Shopping',
+            'هدايا': 'Gifts',
+            'سينما': 'Cinema',
+            'متحف': 'Museum'
+        };
+
+        function formatExtractedTitleForUI(cleanText) {
+            if (!cleanText) return appState.lang === 'ar' ? 'مصروف' : 'Expense';
+            if (appState.lang === 'ar') return cleanText;
+
+            const lower = cleanText.toLowerCase().trim();
+            if (AR_TO_EN_GLOSSARY[lower]) return AR_TO_EN_GLOSSARY[lower];
+
+            let translated = cleanText;
+            Object.keys(AR_TO_EN_GLOSSARY).forEach(arKey => {
+                if (translated.includes(arKey)) {
+                    translated = translated.replace(new RegExp(arKey, 'g'), AR_TO_EN_GLOSSARY[arKey]);
+                }
+            });
+
+            return translated.replace(/\b\w/g, l => l.toUpperCase()).trim();
+        }
+
+        function normalizeArabicNumbers(text) {
+            let t = text.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+            const wordNums = [
+                { re: /عشر\s*آلاف|عشرة\s*آلاف/g, val: 10000 },
+                { re: /خمس\s*آلاف|خمسة\s*آلاف/g, val: 5000 },
+                { re: /أربع\s*آلاف|أربعة\s*آلاف/g, val: 4000 },
+                { re: /ثلاث\s*آلاف|تلت\s*آلاف/g, val: 3000 },
+                { re: /ألفين|الفين/g, val: 2000 },
+                { re: /ألف|الف/g, val: 1000 },
+                { re: /تسعمية|تسعمائة/g, val: 900 },
+                { re: /تمنمية|ثمانمائة/g, val: 800 },
+                { re: /سبعمية|سبعمائة/g, val: 700 },
+                { re: /ستمية|ستمائة/g, val: 600 },
+                { re: /خمسمية|خمسمائة/g, val: 500 },
+                { re: /أربعمية|أربعمائة/g, val: 400 },
+                { re: /تلتمية|ثلاثمائة/g, val: 300 },
+                { re: /ميتين|مائتين/g, val: 200 },
+                { re: /مية|مائة/g, val: 100 }
+            ];
+            wordNums.forEach(item => {
+                t = t.replace(item.re, ` ${item.val} `);
+            });
+            return t;
+        }
+
+        function parseVoiceCommand(rawTranscript) {
+            const normalized = normalizeArabicNumbers(rawTranscript.trim());
+            const lower = normalized.toLowerCase();
+
+            // ---------------------------------------------------------
+            // A. Check Administrative Management Voice Commands First
+            // ---------------------------------------------------------
+            // 1. Delete All Expenses
+            if (/(امسح|احذف|شطب)\s*(كل|جميع)\s*(المصاريف|العمليات)|delete\s*all\s*(expenses|transactions)|clear\s*all\s*expenses/i.test(lower)) {
+                return { intent: 'delete_all' };
+            }
+
+            // 2. Delete Last Transaction
+            if (/(الغ|ألغ|الغي|ألغي|امسح|احذف)\s*(لي\s*)?(اخر|آخر)\s*(عملي[ةه]|مصروف|ترانزاكشن)|delete\s*last\s*(transaction|expense)|undo\s*last/i.test(lower)) {
+                return { intent: 'delete_last' };
+            }
+
+            // 3. Edit Last Transaction Amount
+            if (/(عدل|عدّل|غير|غيّر)\s*(لي\s*)?(اخر|آخر)\s*(عملي[ةه]|مصروف|ترانزاكشن)|edit\s*last\s*(transaction|expense)|change\s*last/i.test(lower)) {
+                const nums = normalized.match(/\d+(\.\d+)?/g);
+                const newVal = nums && nums.length > 0 ? parseFloat(nums[nums.length - 1]) : null;
+                const isBase = /(دينار|دنانير|أردني|اردني|jod|usd|دولار)/i.test(lower);
+                return { intent: 'edit_last', newAmount: newVal, currencyMode: isBase ? 'base' : 'dest' };
+            }
+
+            // 4. Query Remaining Pocket Money
+            if (/(كم|قديش)\s*(ضايل|باقي|متبقي).*(بوكيت|جيب|مصروف|ميزاني)|how\s*much\s*(pocket\s*money|budget)\s*(is\s*)?(left|remaining)/i.test(lower)) {
+                return { intent: 'query_pocket' };
+            }
+
+            // ---------------------------------------------------------
+            // B. Standard Expense Extraction (Keyword + Amount + Category)
+            // ---------------------------------------------------------
+            const numMatches = normalized.match(/\d+(\.\d+)?/g);
+            const amount = numMatches ? parseFloat(numMatches[0]) : 0;
+
+            // Detect Currency (Base vs Destination)
+            const isBaseCurrency = /(دينار|دنانير|أردني|اردني|jod|usd|دولار|ريال|sar|درهم|aed|يورو|eur)/i.test(lower);
+            const currencyMode = isBaseCurrency ? 'base' : 'dest';
+
+            // Detect Category via Keywords
+            let detectedCategory = null;
+            let categoryKnown = false;
+
+            const categoryRules = [
+                { cat: 'food', regex: /(مطعم|أكل|اكل|طعام|غداء|عشاء|فطور|قهوة|كوفي|برجر|بيتزا|شاورما|سي فود|مانغو|ستيكي رايس|restaurant|food|lunch|dinner|breakfast|coffee|cafe|burger|pizza|seafood|mango)/i },
+                { cat: 'hotels', regex: /(فندق|أوتيل|اوتيل|سكن|منتجع|إقامة|اقامة|حجز غرفة|hotel|resort|hostel|accommodation|stay|room)/i },
+                { cat: 'transport', regex: /(تاكسي|تكسي|أوبر|اوبر|كريم|باص|قطار|مترو|مواصلات|سيارة|بنزين|توصيلة|taxi|uber|grab|bolt|bus|train|metro|transport|flight)/i },
+                { cat: 'entertainment', regex: /(سينما|ترفيه|حفلة|ملاهي|مسرح|لعبة|ألعاب|cinema|movie|entertainment|party|park|show)/i },
+                { cat: 'activities', regex: /(نشاط|أنشطة|انشطة|رحلة بحرية|غوص|جولة|متحف|تذكرة|تذاكر|تلفريك|activity|activities|tour|diving|museum|ticket|safari)/i },
+                { cat: 'pocket', regex: /(مساج|تدليك|بوكيت|جيب|تسوق|هدايا|سوبرماركت|بقالة|ماء|مياه|شريحة|انترنت|massage|spa|pocket|shopping|gift|souvenir|water|sim)/i }
+            ];
+
+            for (const rule of categoryRules) {
+                if (rule.regex.test(lower)) {
+                    detectedCategory = rule.cat;
+                    categoryKnown = true;
+                    break;
+                }
+            }
+
+            // Clean filler words, verbs, prepositions, numbers, and ALL currency names
+            let cleanDesc = normalized
+                .replace(/\d+(\.\d+)?/g, ' ')
+                // Strip currency names completely (بات / بط / باهت / دينار / baht / jod etc.)
+                .replace(/(?:^|\s)(?:بـ?|ال)?(?:بات|باهت|بط|دينار|دنانير|أردني|اردني|دولار|ريال|درهم|يورو|baht|thb|jod|usd|sar|aed|eur)(?=\s|$)/gi, ' ')
+                // Strip conversational verbs & prepositions
+                .replace(/(?:^|\s)(?:أنا|انا|رحت|ذهبت|أكلت|اكلت|شربت|اشتريت|شريت|دفعت|عملت|سويت|حجزت|اخذت|أخذت|بقيمة|بمبلغ|قيمته|سعره|من|في|على|عند|بـ|ب|i|went|to|ate|at|bought|paid|for|spent|on|did|got|a|an|the)(?=\s|$)/gi, ' ')
+                // Strip generic category prefix words when followed by a specific place/item name (e.g. "مطعم سي فود" -> "سي فود")
+                .replace(/^(?:مطعم|كافيه|مقهى|فندق|restaurant|cafe|hotel)\s+/i, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            if (!cleanDesc) {
+                cleanDesc = categoryKnown ? getCatName(detectedCategory) : (appState.lang === 'ar' ? 'مصروف' : 'Expense');
+            }
+
+            const finalTitle = formatExtractedTitleForUI(cleanDesc);
+
+            return {
+                intent: 'add_expense',
+                description: finalTitle,
+                amount,
+                currencyMode,
+                category: detectedCategory || 'pocket',
+                categoryKnown
+            };
+        }
+
+        function handleSmartVoiceText(text) {
+            if (!text || !text.trim()) return;
+            const simInput = document.getElementById('voice-sim-input');
+            if (simInput) simInput.value = '';
+
+            const parsed = parseVoiceCommand(text);
+
+            // 1. Delete All Expenses
+            if (parsed.intent === 'delete_all') {
+                if (appState.expenses.length === 0) {
+                    const msg = appState.lang === 'ar' ? 'لا توجد مصاريف لمسحها.' : 'There are no expenses to delete.';
+                    showToast(msg, 'warn');
+                    speakConfirmation(msg);
+                    return;
+                }
+                const promptMsg = appState.lang === 'ar'
+                    ? `هل أنت متأكد من مسح جميع المصاريف (${appState.expenses.length} عملية)؟ لا يمكن التراجع عن هذا الإجراء.`
+                    : `Are you sure you want to delete all ${appState.expenses.length} expenses? This cannot be undone.`;
+                speakConfirmation(promptMsg);
+                openActionConfirmModal(
+                    appState.lang === 'ar' ? 'مسح جميع المصاريف' : 'Delete All Expenses',
+                    promptMsg,
+                    () => {
+                        appState.expenses = [];
+                        addNotification('delete', appState.lang === 'ar' ? 'تم مسح جميع مصاريف الرحلة.' : 'All trip expenses were cleared.');
+                        saveState();
+                        refreshAllMainViews();
+                        const doneMsg = appState.lang === 'ar' ? 'تم مسح جميع المصاريف بنجاح.' : 'All expenses have been deleted.';
+                        showToast(doneMsg, 'warn');
+                        speakConfirmation(doneMsg);
+                    }
+                );
+                return;
+            }
+
+            // 2. Delete Last Transaction
+            if (parsed.intent === 'delete_last') {
+                if (appState.expenses.length === 0) {
+                    const msg = appState.lang === 'ar' ? 'لا توجد عمليات سابقة لإلغائها.' : 'No transactions found to delete.';
+                    showToast(msg, 'warn');
+                    speakConfirmation(msg);
+                    return;
+                }
+                const lastExp = appState.expenses[0];
+                const amtStr = `${fmtNum(toDest(lastExp.amountBase), 0)} ${appState.destCurrency}`;
+                const promptMsg = appState.lang === 'ar'
+                    ? `هل تريد إلغاء آخر عملية: "${lastExp.description}" بقيمة ${amtStr}؟`
+                    : `Do you want to delete the last transaction: "${lastExp.description}" for ${amtStr}?`;
+                speakConfirmation(promptMsg);
+                openActionConfirmModal(
+                    appState.lang === 'ar' ? 'إلغاء آخر عملية' : 'Delete Last Transaction',
+                    promptMsg,
+                    () => {
+                        deleteExpenseById(lastExp.id);
+                        const doneMsg = appState.lang === 'ar' ? `تم إلغاء ${lastExp.description}.` : `Deleted ${lastExp.description}.`;
+                        speakConfirmation(doneMsg);
+                    }
+                );
+                return;
+            }
+
+            // 3. Edit Last Transaction
+            if (parsed.intent === 'edit_last') {
+                if (appState.expenses.length === 0) {
+                    const msg = appState.lang === 'ar' ? 'لا توجد عملية لتعديلها.' : 'No transaction found to edit.';
+                    showToast(msg, 'warn');
+                    speakConfirmation(msg);
+                    return;
+                }
+                if (!parsed.newAmount || parsed.newAmount <= 0) {
+                    const msg = appState.lang === 'ar' ? 'يرجى ذكر المبلغ الجديد لتعديل آخر عملية.' : 'Please specify the new amount to edit the last transaction.';
+                    showToast(msg, 'error');
+                    speakConfirmation(msg);
+                    return;
+                }
+                const lastExp = appState.expenses[0];
+                const newBase = parsed.currencyMode === 'base' ? parsed.newAmount : toBase(parsed.newAmount);
+                const oldStr = `${fmtNum(toDest(lastExp.amountBase), 0)} ${appState.destCurrency}`;
+                const newStr = `${fmtNum(toDest(newBase), 0)} ${appState.destCurrency}`;
+                const promptMsg = appState.lang === 'ar'
+                    ? `تأكيد تعديل "${lastExp.description}" من ${oldStr} إلى ${newStr}؟`
+                    : `Confirm updating "${lastExp.description}" from ${oldStr} to ${newStr}?`;
+                speakConfirmation(promptMsg);
+                openActionConfirmModal(
+                    appState.lang === 'ar' ? 'تعديل آخر عملية' : 'Edit Last Transaction',
+                    promptMsg,
+                    () => {
+                        lastExp.amountBase = newBase;
+                        addNotification('info', appState.lang === 'ar'
+                            ? `تم تعديل "${lastExp.description}" إلى ${newStr}.`
+                            : `Updated "${lastExp.description}" to ${newStr}.`);
+                        saveState();
+                        refreshAllMainViews();
+                        const doneMsg = appState.lang === 'ar' ? `تم تعديل المبلغ إلى ${newStr}.` : `Updated amount to ${newStr}.`;
+                        showToast(doneMsg);
+                        speakConfirmation(doneMsg);
+                    }
+                );
+                return;
+            }
+
+            // 4. Query Remaining Pocket Money
+            if (parsed.intent === 'query_pocket') {
+                const pocketRemBase = getPocketAllocatedBase() - getCategorySpentBase('pocket');
+                const pocketRemDest = toDest(pocketRemBase);
+                const { remainingDays } = getTripDayInfo();
+                const dailyDest = Math.max(0, pocketRemDest) / remainingDays;
+                const reply = appState.lang === 'ar'
+                    ? `المتبقي من مصروف الجيب هو ${fmtNum(pocketRemDest, 0)} ${appState.destCurrency}، بمعدل ${fmtNum(dailyDest, 0)} ${appState.destCurrency} يومياً.`
+                    : `Your remaining pocket money is ${fmtNum(pocketRemDest, 0)} ${appState.destCurrency}, which is ${fmtNum(dailyDest, 0)} ${appState.destCurrency} per day.`;
+                showToast(reply);
+                speakConfirmation(reply);
+                return;
+            }
+
+            // 5. Add Expense -> Open Editable Confirmation Modal
+            openVoiceConfirmModal(parsed);
+        }
+
+        function openVoiceConfirmModal(parsed) {
+            document.getElementById('vconf-desc').value = parsed.description;
+            document.getElementById('vconf-amount').value = parsed.amount > 0 ? parsed.amount : '';
+            document.getElementById('vconf-currency').value = parsed.currencyMode;
+            document.getElementById('vconf-category').value = parsed.category;
+
+            const unknownBanner = document.getElementById('voice-unknown-cat-alert');
+            if (!parsed.categoryKnown) {
+                unknownBanner.classList.remove('hidden');
+            } else {
+                unknownBanner.classList.add('hidden');
+            }
+
+            updateVoiceModalConversion();
+            document.getElementById('voice-confirm-modal').classList.remove('hidden');
+
+            const destPreview = parsed.currencyMode === 'dest' ? parsed.amount : toDest(parsed.amount);
+            const promptVoice = appState.lang === 'ar'
+                ? `هل تريد تسجيل ${parsed.description} بقيمة ${fmtNum(destPreview, 0)} ${appState.destCurrency}؟`
+                : `Confirm ${parsed.description} for ${fmtNum(destPreview, 0)} ${appState.destCurrency}?`;
+            speakConfirmation(promptVoice);
+        }
+
+        function updateVoiceModalConversion() {
+            const amt = parseFloat(document.getElementById('vconf-amount').value) || 0;
+            const mode = document.getElementById('vconf-currency').value;
+            const subEl = document.getElementById('vconf-converted-sub');
+            if (mode === 'dest') {
+                subEl.textContent = `≈ ${fmtNum(toBase(amt), 2)} ${appState.baseCurrency}`;
+            } else {
+                subEl.textContent = `≈ ${fmtNum(toDest(amt), 0)} ${appState.destCurrency}`;
+            }
+        }
+
+        function closeVoiceConfirmModal() {
+            document.getElementById('voice-confirm-modal').classList.add('hidden');
+        }
+
+        function confirmVoiceExpenseSave() {
+            const desc = document.getElementById('vconf-desc').value.trim();
+            const amt = parseFloat(document.getElementById('vconf-amount').value);
+            const currMode = document.getElementById('vconf-currency').value;
+            const category = document.getElementById('vconf-category').value;
+
+            if (!desc || !amt || amt <= 0) {
+                showToast(appState.lang === 'ar' ? 'يرجى التحقق من الاسم والمبلغ' : 'Please check item name and amount', 'error');
+                return;
+            }
+
+            const amountBase = currMode === 'base' ? amt : toBase(amt);
+            closeVoiceConfirmModal();
+            recordNewExpense(desc, amountBase, category);
+
+            const spokenDone = appState.lang === 'ar'
+                ? `تمت إضافة ${desc} بقيمة ${fmtNum(toDest(amountBase), 0)} ${appState.destCurrency} بنجاح.`
+                : `Added ${desc} for ${fmtNum(toDest(amountBase), 0)} ${appState.destCurrency}.`;
+            speakConfirmation(spokenDone);
+        }
+
+        // =========================================================================
+        // 8. WEB SPEECH API (BILINGUAL RECOGNITION + HUMAN TTS SPEAKER)
+        // =========================================================================
+        function toggleVoiceRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                showToast(appState.lang === 'ar'
+                    ? 'المتصفح لا يدعم المايك مباشرة، استخدم مربع الكتابة السريع بالأسفل'
+                    : 'Browser mic not supported here; use the quick command bar below', 'warn');
+                return;
+            }
+
+            if (isListening && recognition) {
+                recognition.stop();
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            // Auto-detect Arabic (Jordanian) & English mixed phrases seamlessly
+            recognition.lang = appState.lang === 'ar' ? 'ar-JO' : 'en-US';
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 5;
+
+            let bestTranscript = '';
+
+            recognition.onstart = () => {
+                isListening = true;
+                document.getElementById('mic-btn').classList.add('mic-listening');
+                document.getElementById('mic-icon').className = 'fa-solid fa-stop text-xl';
+                document.getElementById('voice-status-text').textContent =
+                    appState.lang === 'ar' ? 'جاري الاستماع... تحدث الآن' : 'Listening... Speak now';
+                document.getElementById('voice-transcript-preview').textContent = '';
+            };
+
+            recognition.onresult = (event) => {
+                let interim = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const res = event.results[i];
+                    if (res.isFinal) {
+                        // Score N-best alternatives to pick the one containing digits/keywords cleanly
+                        let chosen = res[0].transcript;
+                        let bestScore = -1;
+                        for (let a = 0; a < res.length; a++) {
+                            const cand = res[a].transcript;
+                            let score = 0;
+                            if (/\d/.test(cand)) score += 5;
+                            if (/(بات|بط|دينار|baht|jod|مطعم|مساج|massage|restaurant)/i.test(cand)) score += 3;
+                            if (score > bestScore) {
+                                bestScore = score;
+                                chosen = cand;
+                            }
+                        }
+                        bestTranscript = chosen;
+                    } else {
+                        interim += res[0].transcript;
+                    }
+                }
+                document.getElementById('voice-transcript-preview').textContent = bestTranscript || interim;
+            };
+
+            recognition.onerror = (event) => {
+                isListening = false;
+                resetMicVisuals();
+                if (event.error !== 'aborted') {
+                    showToast(appState.lang === 'ar' ? 'لم يتم التقاط الصوت بوضوح، حاول مرة أخرى' : 'Could not hear clearly, please try again', 'warn');
+                }
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                resetMicVisuals();
+                if (bestTranscript.trim()) {
+                    handleSmartVoiceText(bestTranscript.trim());
+                }
+            };
+
+            recognition.start();
+        }
+
+        function resetMicVisuals() {
+            document.getElementById('mic-btn').classList.remove('mic-listening');
+            document.getElementById('mic-icon').className = 'fa-solid fa-microphone text-xl';
+            document.getElementById('voice-status-text').textContent = I18N[appState.lang].tapMicPrompt;
+        }
+
+        function initSpeechSynthesisVoices() {
+            if (!('speechSynthesis' in window)) return;
+            populateSpeakerVoicesList();
+            window.speechSynthesis.onvoiceschanged = populateSpeakerVoicesList;
+        }
+
+        function populateSpeakerVoicesList() {
+            if (!('speechSynthesis' in window)) return;
+            const selectEl = document.getElementById('settings-voice-select');
+            if (!selectEl) return;
+
+            const allVoices = window.speechSynthesis.getVoices();
+            const langPrefix = appState.lang === 'ar' ? 'ar' : 'en';
+            const filtered = allVoices.filter(v => v.lang.toLowerCase().startsWith(langPrefix));
+            const listToUse = filtered.length > 0 ? filtered : allVoices;
+
+            // Prioritize Natural / Google / Microsoft / Apple voices
+            listToUse.sort((a, b) => {
+                const score = v => (/natural|google|microsoft|samantha|daniel|tarik|maged|salma|layla/i.test(v.name) ? 10 : 0);
+                return score(b) - score(a);
+            });
+
+            selectEl.innerHTML = listToUse.map(v =>
+                `<option value="${v.voiceURI}" ${appState.settings.selectedVoiceURI === v.voiceURI ? 'selected' : ''}>${v.name} (${v.lang})</option>`
+            ).join('');
+        }
+
+        function selectSpeakerVoice(uri) {
+            appState.settings.selectedVoiceURI = uri;
+            saveState();
+        }
+
+        function testSelectedSpeakerVoice() {
+            const sample = appState.lang === 'ar'
+                ? 'أهلاً بك! تم تفعيل المساعد الصوتي لرحلتك بنجاح.'
+                : 'Hello! Your smart travel voice assistant is ready.';
+            speakConfirmation(sample, true);
+        }
+
+        function speakConfirmation(text, force = false) {
+            if (!force && !appState.settings.speakerEnabled) return;
+            if (!('speechSynthesis' in window)) return;
+
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = appState.lang === 'ar' ? 'ar-SA' : 'en-US';
+            utter.rate = 1.0;
+            utter.pitch = 1.0;
+
+            const voices = window.speechSynthesis.getVoices();
+            if (appState.settings.selectedVoiceURI) {
+                const match = voices.find(v => v.voiceURI === appState.settings.selectedVoiceURI);
+                if (match) utter.voice = match;
+            }
+            window.speechSynthesis.speak(utter);
+        }
+
+        // =========================================================================
+        // 9. NOTIFICATIONS SYSTEM
+        // =========================================================================
+        function addNotification(type, message, meta = {}) {
+            appState.notifications.unshift({
+                id: 'notif_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+                type,
+                message,
+                meta,
+                unread: true,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+            if (appState.notifications.length > 40) appState.notifications.pop();
+            updateNotifBadge();
+        }
+
+        function updateNotifBadge() {
+            const unreadCount = appState.notifications.filter(n => n.unread).length;
+            const badge = document.getElementById('notif-badge');
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function openNotificationsModal() {
+            appState.notifications.forEach(n => n.unread = false);
+            saveState();
+            updateNotifBadge();
+
+            const listEl = document.getElementById('notifications-list');
+            if (appState.notifications.length === 0) {
+                listEl.innerHTML = `<p class="text-center text-xs text-slate-400 py-8">${I18N[appState.lang].noNotifications}</p>`;
+            } else {
+                listEl.innerHTML = appState.notifications.map(n => {
+                    let iconClass = 'fa-circle-info text-indigo-600 bg-indigo-50';
+                    if (n.type === 'add') iconClass = 'fa-circle-plus text-emerald-600 bg-emerald-50';
+                    if (n.type === 'delete') iconClass = 'fa-trash-can text-rose-600 bg-rose-50';
+                    if (n.type === 'pocket_warn') iconClass = 'fa-triangle-exclamation text-amber-600 bg-amber-50';
+                    if (n.type === 'category_done') iconClass = 'fa-flag-checkered text-violet-600 bg-violet-50';
+
+                    const closeBtnHtml = (n.type === 'category_done' && n.meta && n.meta.categoryId && !appState.closedCategories[n.meta.categoryId])
+                        ? `<button onclick="closeCategoryBudget('${n.meta.categoryId}')" class="mt-2 px-3 py-1.5 rounded-xl bg-violet-600 text-white text-[11px] font-extrabold">${I18N[appState.lang].closeBudgetBtn}</button>`
+                        : '';
+
+                    return `
+                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-xl ${iconClass} flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid ${iconClass.split(' ')[0]} text-xs"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs text-slate-800 font-medium leading-relaxed">${escapeHtml(n.message)}</p>
+                                <span class="text-[10px] text-slate-400 block mt-1">${n.time}</span>
+                                ${closeBtnHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            document.getElementById('notifications-modal').classList.remove('hidden');
+        }
+
+        function closeCategoryBudget(categoryId) {
+            appState.closedCategories[categoryId] = true;
+            saveState();
+            refreshAllMainViews();
+            openNotificationsModal();
+            showToast(appState.lang === 'ar' ? `تم إغلاق بند ${getCatName(categoryId)}` : `${getCatName(categoryId)} budget closed`);
+        }
+
+        function clearAllNotifications() {
+            appState.notifications = [];
+            saveState();
+            updateNotifBadge();
+            openNotificationsModal();
+        }
+
+        function closeNotificationsModal() {
+            document.getElementById('notifications-modal').classList.add('hidden');
+        }
+
+        // =========================================================================
+        // 10. REPORTS, BUDGET TABLE, ANALYSIS & SETTINGS
+        // =========================================================================
+        function switchReportType(type) {
+            currentReportType = type;
+            const todayBtn = document.getElementById('rep-btn-today');
+            const fullBtn = document.getElementById('rep-btn-full');
+
+            if (type === 'today') {
+                todayBtn.className = 'flex-1 py-2.5 rounded-xl text-xs font-extrabold bg-indigo-600 text-white shadow-sm transition';
+                fullBtn.className = 'flex-1 py-2.5 rounded-xl text-xs font-extrabold text-slate-600 hover:bg-slate-50 transition';
+            } else {
+                fullBtn.className = 'flex-1 py-2.5 rounded-xl text-xs font-extrabold bg-indigo-600 text-white shadow-sm transition';
+                todayBtn.className = 'flex-1 py-2.5 rounded-xl text-xs font-extrabold text-slate-600 hover:bg-slate-50 transition';
+            }
+            renderReportsTab();
+        }
+
+        function renderReportsTab() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const items = currentReportType === 'today'
+                ? appState.expenses.filter(e => e.date === todayStr)
+                : appState.expenses;
+
+            const totalBase = items.reduce((s, e) => s + e.amountBase, 0);
+            const totalDest = toDest(totalBase);
+
+            document.getElementById('rep-total-dest').textContent = `${fmtNum(totalDest, 0)} ${appState.destCurrency}`;
+            document.getElementById('rep-total-base').textContent = `${fmtNum(totalBase, 2)} ${appState.baseCurrency}`;
+            document.getElementById('rep-count-badge').textContent = `${items.length} ${appState.lang === 'ar' ? 'عملية' : 'items'}`;
+
+            const listEl = document.getElementById('reports-list');
+            if (items.length === 0) {
+                listEl.innerHTML = `<div class="bg-white p-6 rounded-3xl border border-slate-100 text-center text-xs text-slate-400">${I18N[appState.lang].noExpensesYet}</div>`;
+                return;
+            }
+            listEl.innerHTML = items.map(exp => renderExpenseCardHtml(exp)).join('');
+        }
+
+        function renderBudgetTab() {
+            const tbody = document.getElementById('budget-table-body');
+            tbody.innerHTML = CATEGORIES.map(cat => {
+                const allocBase = cat.id === 'pocket' ? getPocketAllocatedBase() : (Number(appState.allocationsBase[cat.id]) || 0);
+                const spentBase = getCategorySpentBase(cat.id);
+                const remBase = allocBase - spentBase;
+
+                return `
+                    <tr>
+                        <td class="py-3 font-extrabold text-slate-800">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid ${cat.icon} text-indigo-500 w-4"></i>
+                                <span>${getCatName(cat.id)}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 text-end">
+                            <div class="font-bold text-slate-800">${fmtNum(toDest(allocBase), 0)} ${appState.destCurrency}</div>
+                            <div class="text-[10px] text-slate-400">${fmtNum(allocBase, 2)} ${appState.baseCurrency}</div>
+                        </td>
+                        <td class="py-3 text-end">
+                            <div class="font-bold text-rose-600">${fmtNum(toDest(spentBase), 0)} ${appState.destCurrency}</div>
+                            <div class="text-[10px] text-slate-400">${fmtNum(spentBase, 2)} ${appState.baseCurrency}</div>
+                        </td>
+                        <td class="py-3 text-end">
+                            <div class="font-extrabold ${remBase < 0 ? 'text-rose-600' : 'text-emerald-600'}">${fmtNum(toDest(remBase), 0)} ${appState.destCurrency}</div>
+                            <div class="text-[10px] text-slate-400">${fmtNum(remBase, 2)} ${appState.baseCurrency}</div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderAnalysisTab() {
+            const totalSpentBase = getTotalSpentBase();
+            const totalBudgetBase = Number(appState.totalBudgetBase) || 1;
+            const consumedPct = Math.min(100, Math.round((totalSpentBase / totalBudgetBase) * 100));
+
+            document.getElementById('ana-consumed-pct').textContent = `${consumedPct}%`;
+            document.getElementById('ana-consumed-val').textContent = `${fmtNum(toDest(totalSpentBase), 0)} ${appState.destCurrency} (${fmtNum(totalSpentBase, 2)} ${appState.baseCurrency})`;
+
+            // Highest Spending Category
+            let topCatId = null;
+            let topCatBase = 0;
+            CATEGORIES.forEach(c => {
+                const s = getCategorySpentBase(c.id);
+                if (s > topCatBase) {
+                    topCatBase = s;
+                    topCatId = c.id;
+                }
+            });
+
+            document.getElementById('ana-top-cat').textContent = topCatId ? getCatName(topCatId) : '-';
+            document.getElementById('ana-top-cat-val').textContent = `${fmtNum(toDest(topCatBase), 0)} ${appState.destCurrency}`;
+
+            // Remaining Pocket Money
+            const pocketRemBase = getPocketAllocatedBase() - getCategorySpentBase('pocket');
+            document.getElementById('ana-pocket-dest').textContent = `${fmtNum(toDest(pocketRemBase), 0)} ${appState.destCurrency}`;
+            document.getElementById('ana-pocket-base').textContent = `${fmtNum(pocketRemBase, 2)} ${appState.baseCurrency}`;
+
+            // Category Breakdown Bars
+            document.getElementById('ana-categories-bars').innerHTML = CATEGORIES.map(cat => {
+                const spentBase = getCategorySpentBase(cat.id);
+                const allocBase = cat.id === 'pocket' ? getPocketAllocatedBase() : (Number(appState.allocationsBase[cat.id]) || 0);
+                const pct = allocBase > 0 ? Math.min(100, Math.round((spentBase / allocBase) * 100)) : (spentBase > 0 ? 100 : 0);
+
+                return `
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold text-slate-700">${getCatName(cat.id)}</span>
+                            <span class="font-extrabold text-slate-900">${fmtNum(toDest(spentBase), 0)} ${appState.destCurrency} <span class="text-slate-400 font-normal">(${fmtNum(spentBase, 2)} ${appState.baseCurrency})</span></span>
+                        </div>
+                        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-indigo-600 rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Top 5 Expenses
+            const top5 = [...appState.expenses].sort((a, b) => b.amountBase - a.amountBase).slice(0, 5);
+            const top5El = document.getElementById('ana-top5-list');
+            if (top5.length === 0) {
+                top5El.innerHTML = `<p class="text-xs text-slate-400 text-center py-3">${I18N[appState.lang].noExpensesYet}</p>`;
+            } else {
+                top5El.innerHTML = top5.map((exp, i) => `
+                    <div class="flex items-center justify-between py-2 border-b border-slate-50 last:border-0 text-xs">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 font-extrabold text-[10px] flex items-center justify-center shrink-0">${i + 1}</span>
+                            <span class="font-bold text-slate-800 truncate">${escapeHtml(exp.description)}</span>
+                        </div>
+                        <span class="font-extrabold text-slate-900 shrink-0">${fmtNum(toDest(exp.amountBase), 0)} ${appState.destCurrency}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function renderSettingsTab() {
+            document.getElementById('settings-voice-toggle').checked = appState.settings.voiceEnabled;
+            document.getElementById('settings-speaker-toggle').checked = appState.settings.speakerEnabled;
+
+            const voiceSelBox = document.getElementById('speaker-voice-selector-box');
+            if (appState.settings.speakerEnabled) {
+                voiceSelBox.classList.remove('hidden');
+            } else {
+                voiceSelBox.classList.add('hidden');
+            }
+
+            // Populate Edit Budget Target Options
+            const targetSel = document.getElementById('edit-budget-target');
+            const options = [
+                { val: 'total', label: appState.lang === 'ar' ? 'الميزانية الكلية (Total Budget)' : 'Total Trip Budget' },
+                { val: 'pocket', label: appState.lang === 'ar' ? 'مصروف الجيب (Pocket Money)' : 'Pocket Money' },
+                ...CATEGORIES.filter(c => c.id !== 'pocket').map(c => ({ val: c.id, label: getCatName(c.id) }))
+            ];
+            const prevVal = targetSel.value || 'total';
+            targetSel.innerHTML = options.map(o => `<option value="${o.val}">${o.label}</option>`).join('');
+            targetSel.value = prevVal;
+            loadEditBudgetTargetValue();
+
+            // Populate Currency Settings
+            document.getElementById('settings-curr-summary').textContent =
+                `${appState.lang === 'ar' ? 'الأساسية:' : 'Base:'} ${appState.baseCurrency} • ${appState.lang === 'ar' ? 'التحويل:' : 'Destination:'} ${appState.destCurrency}`;
+            document.getElementById('set-base-curr').value = appState.baseCurrency;
+            document.getElementById('set-dest-curr').value = appState.destCurrency;
+            document.getElementById('set-rate-val').value = appState.exchangeRate;
+        }
+
+        function toggleVoiceSetting(enabled) {
+            appState.settings.voiceEnabled = enabled;
+            saveState();
+            refreshAllMainViews();
+        }
+
+        function toggleSpeakerSetting(enabled) {
+            appState.settings.speakerEnabled = enabled;
+            saveState();
+            renderSettingsTab();
+        }
+
+        function loadEditBudgetTargetValue() {
+            const target = document.getElementById('edit-budget-target').value;
+            let currentBase = 0;
+            if (target === 'total') currentBase = appState.totalBudgetBase;
+            else if (target === 'pocket') currentBase = getPocketAllocatedBase();
+            else currentBase = Number(appState.allocationsBase[target]) || 0;
+
+            document.getElementById('edit-budget-current-info').textContent =
+                `${appState.lang === 'ar' ? 'القيمة الحالية:' : 'Current:'} ${fmtNum(toDest(currentBase), 0)} ${appState.destCurrency} (${fmtNum(currentBase, 2)} ${appState.baseCurrency})`;
+        }
+
+        function reviewBudgetEdit() {
+            const target = document.getElementById('edit-budget-target').value;
+            const newVal = parseFloat(document.getElementById('edit-budget-new-val').value);
+            const mode = document.getElementById('edit-budget-curr-mode').value;
+
+            if (isNaN(newVal) || newVal < 0) {
+                showToast(appState.lang === 'ar' ? 'يرجى إدخال قيمة صحيحة' : 'Please enter a valid amount', 'error');
+                return;
+            }
+
+            const newBase = mode === 'base' ? newVal : toBase(newVal);
+            const msg = appState.lang === 'ar'
+                ? `تأكيد تعديل القيمة إلى ${fmtNum(toDest(newBase), 0)} ${appState.destCurrency} (${fmtNum(newBase, 2)} ${appState.baseCurrency})؟`
+                : `Confirm updating value to ${fmtNum(toDest(newBase), 0)} ${appState.destCurrency} (${fmtNum(newBase, 2)} ${appState.baseCurrency})?`;
+
+            openActionConfirmModal(
+                appState.lang === 'ar' ? 'تأكيد تعديل الميزانية' : 'Confirm Budget Update',
+                msg,
+                () => {
+                    if (target === 'total') {
+                        appState.totalBudgetBase = newBase;
+                    } else if (target === 'pocket') {
+                        const diff = newBase - getPocketAllocatedBase();
+                        appState.totalBudgetBase = Math.max(0, appState.totalBudgetBase + diff);
+                    } else {
+                        appState.allocationsBase[target] = newBase;
+                        if (getAllocatedSumBase() > appState.totalBudgetBase) {
+                            appState.totalBudgetBase = getAllocatedSumBase();
+                        }
+                    }
+                    document.getElementById('edit-budget-new-val').value = '';
+                    saveState();
+                    refreshAllMainViews();
+                    showToast(appState.lang === 'ar' ? 'تم تحديث الميزانية بنجاح' : 'Budget updated successfully');
+                }
+            );
+        }
+
+        function saveCurrencySettings() {
+            const base = document.getElementById('set-base-curr').value;
+            const dest = document.getElementById('set-dest-curr').value;
+            const rate = parseFloat(document.getElementById('set-rate-val').value);
+
+            if (!rate || rate <= 0) {
+                showToast(appState.lang === 'ar' ? 'يرجى إدخال سعر صرف صحيح' : 'Please enter a valid exchange rate', 'error');
+                return;
+            }
+
+            appState.baseCurrency = base;
+            appState.destCurrency = dest;
+            appState.exchangeRate = rate;
+            saveState();
+            refreshAllMainViews();
+            showToast(appState.lang === 'ar' ? 'تم تحديث العملات وسعر الصرف' : 'Currencies and exchange rate updated');
+        }
+
+        function confirmResetNewTrip() {
+            const msg = appState.lang === 'ar'
+                ? 'هل أنت متأكد من بدء رحلة جديدة؟ سيتم مسح بيانات الرحلة الحالية.'
+                : 'Start a new trip? Current trip data will be cleared.';
+            openActionConfirmModal(
+                appState.lang === 'ar' ? 'بدء رحلة جديدة' : 'Start New Trip',
+                msg,
+                () => {
+                    localStorage.removeItem(STORAGE_KEY);
+                    location.reload();
+                }
+            );
+        }
+
+        // =========================================================================
+        // 11. GENERIC CONFIRMATION MODAL & PWA PNG MANIFEST GENERATOR
+        // =========================================================================
+        function openActionConfirmModal(title, message, onConfirm) {
+            document.getElementById('aconf-title').textContent = title;
+            document.getElementById('aconf-message').textContent = message;
+            pendingActionCallback = onConfirm;
+            document.getElementById('aconf-confirm-btn').onclick = () => {
+                closeActionConfirmModal();
+                if (typeof pendingActionCallback === 'function') pendingActionCallback();
+            };
+            document.getElementById('action-confirm-modal').classList.remove('hidden');
+        }
+
+        function closeActionConfirmModal() {
+            document.getElementById('action-confirm-modal').classList.add('hidden');
+        }
+
+        function generatePngIconDataUrl(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Indigo square background
+            ctx.fillStyle = '#4338ca';
+            ctx.fillRect(0, 0, size, size);
+
+            // Subtle inner highlight circle
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+            ctx.beginPath();
+            ctx.arc(size * 0.5, size * 0.5, size * 0.36, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Paper plane / travel icon in crisp white
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(size * 0.74, size * 0.32);
+            ctx.lineTo(size * 0.26, size * 0.50);
+            ctx.lineTo(size * 0.43, size * 0.57);
+            ctx.lineTo(size * 0.50, size * 0.74);
+            ctx.closePath();
+            ctx.fill();
+
+            return canvas.toDataURL('image/png');
+        }
+
+        function initPwaManifest() {
+            try {
+                const icon192 = generatePngIconDataUrl(192);
+                const icon512 = generatePngIconDataUrl(512);
+                const manifestObj = {
+                    name: 'MyTravelExpense',
+                    short_name: 'TravelExpense',
+                    start_url: window.location.href,
+                    scope: window.location.origin + '/',
+                    display: 'standalone',
+                    background_color: '#f8fafc',
+                    theme_color: '#4338ca',
+                    orientation: 'portrait',
+                    icons: [
+                        { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any' },
+                        { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any' },
+                        { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+                    ]
+                };
+                const manifestDataUrl = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestObj));
+                const manifestEl = document.getElementById('dynamic-manifest');
+                if (manifestEl) manifestEl.setAttribute('href', manifestDataUrl);
+            } catch (e) {
+                console.warn('PWA manifest init skipped:', e);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', bootApp);
+    </script>
+</body>
+</html>
